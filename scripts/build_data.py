@@ -6,6 +6,8 @@
 Výstup:
     cizinci/mapa.json   – podíl cizinců na obyvatelích po okresech + nejčastější státy
     cizinci/vyvoj.json  – měsíční řada za ČR, celkem a hlavní státy
+    obyvatele/obce.json           – obyvatelé a cizinci ve všech obcích po letech
+    obyvatele/mestske_casti.json  – totéž za městské části 8 statutárních měst
 
 Když se struktura nebo součty nesrovnají, skript skončí chybou (workflow pak web nenasadí
 a zůstane poslední funkční verze).
@@ -21,7 +23,8 @@ import requests
 ROOT = Path(__file__).resolve().parent.parent
 RAW = "https://raw.githubusercontent.com/opendatabrno/{repo}/main/vystup/{soubor}"
 TOP_OKRES = 8      # kolik nejčastějších států ukázat u okresu
-TOP_VYVOJ = 12     # kolik států nabídnout v grafu vývoje
+TOP_VYVOJ = 12     # kolik největších států nabídnout v grafu vývoje jako tlačítka
+MIN_VYVOJ = 100    # další státy jde přidat ze seznamu, pokud měly kdykoli aspoň tolik lidí
 
 SLOUPCE = {
     ("cizinci", "cizinci_okresy.csv"): ["rok", "kod_okresu", "okres", "kod_kraje", "kraj", "cizinci_celkem",
@@ -32,7 +35,10 @@ SLOUPCE = {
     ("cizinci", "cizinci_mesicne.csv"): ["rok", "mesic", "stav_k", "kod_statu", "statni_prislusnost", "skupina",
                                          "cizinci_celkem", "cizinci_trvaly_pobyt", "cizinci_prechodny_pobyt",
                                          "cizinci_docasna_ochrana"],
-    ("obyvatele", "obyvatele_obce.csv"): ["rok", "kod_okresu", "obyvatele_celkem"],
+    ("obyvatele", "obyvatele_obce.csv"): ["rok", "kod_obce", "nazev_obce", "kod_okresu", "okres", "kod_kraje",
+                                          "kraj", "obyvatele_celkem", "obcane_celkem", "cizinci_celkem"],
+    ("obyvatele", "obyvatele_mestske_casti.csv"): ["rok", "kod_obce", "nazev_obce", "kod_mc", "nazev_mc",
+                                                   "obyvatele_celkem", "obcane_celkem", "cizinci_celkem"],
 }
 
 
@@ -51,7 +57,8 @@ def nacti(repo, soubor, mistni):
         r.raise_for_status()
         zdroj = io.BytesIO(r.content)
     chybi = SLOUPCE[(repo, soubor)]
-    d = pd.read_csv(zdroj, encoding="utf-8-sig", dtype={"kod_okresu": str, "kod_kraje": str},
+    d = pd.read_csv(zdroj, encoding="utf-8-sig",
+                    dtype={"kod_okresu": str, "kod_kraje": str, "kod_obce": str, "kod_mc": "Int64"},
                     keep_default_na=False, na_values=[""])
     chybi = [c for c in chybi if c not in d.columns]
     if chybi:
@@ -125,7 +132,8 @@ def vyvoj(m):
 
     # státy s největším počtem kdykoli v řadě (Ukrajina, Slovensko, Vietnam …)
     maxima = m.groupby("kod_statu").cizinci_celkem.max().sort_values(ascending=False)
-    vybrane = [k for k in maxima.index if k not in ("XXX",)][:TOP_VYVOJ]
+    vybrane = [k for k in maxima.index if k != "XXX" and maxima[k] >= MIN_VYVOJ]
+    hlavni = set(vybrane[:TOP_VYVOJ])
     nazvy = m.drop_duplicates("kod_statu", keep="last").set_index("kod_statu").statni_prislusnost
     p = m[m.kod_statu.isin(vybrane)].pivot_table(index="stav_k", columns="kod_statu",
                                                   values="cizinci_celkem", aggfunc="sum")
@@ -141,7 +149,55 @@ def vyvoj(m):
             "celkem": rada(celkem.cizinci_celkem), "trvaly": rada(celkem.cizinci_trvaly_pobyt),
             "prechodny": rada(celkem.cizinci_prechodny_pobyt), "eu": rada(celkem.eu.fillna(0).where(
                 celkem.cizinci_celkem.notna())), "docasna": rada(celkem.docasna),
-            "staty": [{"kod": k, "n": nazvy[k], "v": rada(p[k])} for k in vybrane]}
+            "staty": [{"kod": k, "n": nazvy[k], "v": rada(p[k]), **({"hlavni": 1} if k in hlavni else {})}
+                      for k in vybrane]}
+
+
+def obce(o):
+    """Každá obec: název, okres, obyvatelé a cizinci po letech (občané = obyvatelé − cizinci)."""
+    kontrola((o.obcane_celkem + o.cizinci_celkem == o.obyvatele_celkem).all(),
+             "obyvatelé obcí: občané + cizinci ≠ obyvatelé")
+    roky = sorted(o.rok.unique())
+    kontrola(len(roky) >= 5 and roky == list(range(roky[0], roky[-1] + 1)), f"obce: chybí roky {roky}")
+    posledni = o[o.rok == roky[-1]]
+    kontrola(len(posledni) > 6000, f"obce: v roce {roky[-1]} jen {len(posledni)} obcí")
+    kontrola(posledni.kod_obce.is_unique, "obce: kód obce je v roce víckrát")
+    # okres z posledního roku, kde ho obec má (vojenské újezdy ho v některých letech nemají)
+    okres = o.dropna(subset=["kod_okresu"]).sort_values("rok").groupby("kod_obce").last()
+    p = o.pivot_table(index="kod_obce", columns="rok", values=["obyvatele_celkem", "cizinci_celkem"])
+    out = {}
+    for kod, r in posledni.set_index("kod_obce").iterrows():
+        def rada(sl):
+            return [None if pd.isna(p.at[kod, (sl, y)]) else int(p.at[kod, (sl, y)]) for y in roky]
+        out[kod] = [r.nazev_obce, okres.kod_okresu.get(kod, "") or "", rada("obyvatele_celkem"), rada("cizinci_celkem")]
+    okresy = okres.drop_duplicates("kod_okresu").set_index("kod_okresu").okres.sort_index().to_dict()
+    kraje = okres.drop_duplicates("kod_kraje").set_index("kod_kraje").kraj.sort_index().to_dict()
+    cr = o.groupby("rok")[["obyvatele_celkem", "cizinci_celkem"]].sum()
+    return {"roky": [int(y) for y in roky], "obce": out, "okresy": okresy, "kraje": kraje,
+            "cr": [cr.obyvatele_celkem.astype(int).tolist(), cr.cizinci_celkem.astype(int).tolist()]}
+
+
+def mestske_casti(m, o):
+    """Městské části: stejné řady jako obce; součet MČ (bez neurčených) se ověří proti obci."""
+    roky = sorted(m.rok.unique())
+    soucet = m.groupby(["rok", "kod_obce"]).obyvatele_celkem.sum()
+    obec = o.set_index(["rok", "kod_obce"]).obyvatele_celkem.reindex(soucet.index)
+    # MV uvádí MČ a obce v drobně odlišných součtech (Praha do 2021 o stovky osob, viz kontrola_mc.csv
+    # v repozitáři obyvatele); hlídá se jen, že rozdíl nepřesáhne 0,5 %
+    rozdil = ((soucet - obec).abs() / obec).max()
+    kontrola(rozdil < 0.005, f"městské části: součet MČ nesedí na obec (max. rozdíl {rozdil:.2%})")
+    m = m[m.kod_mc.notna()]
+    p = m.pivot_table(index="kod_mc", columns="rok", values=["obyvatele_celkem", "cizinci_celkem"])
+    out = {}
+    for kod_obce, g in m.sort_values("rok").groupby("kod_obce"):
+        posl = g.drop_duplicates("kod_mc", keep="last")
+        casti = {}
+        for _, r in posl.iterrows():
+            k = int(r.kod_mc)
+            casti[str(k)] = [r.nazev_mc] + [[None if pd.isna(p.at[k, (sl, y)]) else int(p.at[k, (sl, y)])
+                                             for y in roky] for sl in ("obyvatele_celkem", "cizinci_celkem")]
+        out[kod_obce] = {"nazev": posl.nazev_obce.iloc[-1], "casti": casti}
+    return {"roky": [int(y) for y in roky], "mesta": out}
 
 
 def uloz(data, cesta):
@@ -157,9 +213,12 @@ def main():
     staty = nacti("cizinci", "cizinci_okresy_staty.csv", mistni)
     mesicne = nacti("cizinci", "cizinci_mesicne.csv", mistni)
     obyv = nacti("obyvatele", "obyvatele_obce.csv", mistni)
+    mc = nacti("obyvatele", "obyvatele_mestske_casti.csv", mistni)
     print("Připravuji data:")
     uloz(mapa(okresy, staty, obyv), ROOT / "cizinci" / "mapa.json")
     uloz(vyvoj(mesicne), ROOT / "cizinci" / "vyvoj.json")
+    uloz(obce(obyv), ROOT / "obyvatele" / "obce.json")
+    uloz(mestske_casti(mc, obyv), ROOT / "obyvatele" / "mestske_casti.json")
 
 
 if __name__ == "__main__":

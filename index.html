@@ -30,26 +30,38 @@ a{color:var(--acc)}
 <a href="https://github.com/opendatabrno/obyvatele">opendatabrno/obyvatele</a>.</p>
 <div class="grid" id="grid"></div>
 
+<h2>Obyvatelé obcí</h2>
+<p>Data: <a href="https://github.com/opendatabrno/obyvatele">opendatabrno/obyvatele</a> (informativní počty obyvatel MV ČR k 1. 1.).</p>
+<div class="grid" id="grid2"></div>
+
 <h2>Parametry</h2>
 <p>Do adresy grafu lze přidat parametry, např. <code>cizinci/?graf=mapa&amp;okres=CZ0642&amp;nadpis=0</code>.</p>
 <table class="param">
 <tr><td><code>nadpis=0</code></td><td>skryje nadpis (hodí se, když ho má stránka, do které graf vkládáte)</td></tr>
 <tr><td><code>ovladani=0</code></td><td>skryje ovládací prvky; graf ukáže stav podle ostatních parametrů</td></tr>
 <tr><td><code>tema=svetle</code> / <code>tema=tmave</code></td><td>vynutí světlé nebo tmavé barvy (jinak podle nastavení zařízení)</td></tr>
-<tr><td><code>graf=mapa</code></td><td>mapa okresů; dál <code>rok=2025</code>, <code>okres=CZ0642</code> (kód okresu NUTS/LAU), <code>ukazatel=pocet</code> (počet místo podílu)</td></tr>
-<tr><td><code>graf=vyvoj</code></td><td>měsíční vývoj; dál <code>rezim=staty</code>, <code>staty=UKR,SVK,VNM</code> (kódy ISO), <code>od=2015</code>, <code>osa=log</code></td></tr>
+<tr><td><code>cizinci/?graf=mapa</code></td><td>mapa okresů; dál <code>rok=2025</code>, <code>okres=CZ0642</code> (kód okresu NUTS/LAU), <code>ukazatel=pocet</code> (počet místo podílu)</td></tr>
+<tr><td><code>cizinci/?graf=vyvoj</code></td><td>měsíční vývoj; dál <code>rezim=staty</code>, <code>staty=UKR,SVK,VNM</code> (kódy ISO), <code>od=2015</code>, <code>osa=log</code></td></tr>
+<tr><td><code>obyvatele/?graf=mapa</code></td><td>mapa obcí; dál <code>ukazatel=obcane</code> / <code>cizinci</code>, <code>od=2014</code>, <code>do=2026</code>, <code>kraj=CZ064</code> (přiblížení), <code>obec=582786</code> (kód obce)</td></tr>
+<tr><td><code>obyvatele/?graf=mesto</code></td><td>městské části; dál <code>mesto=582786</code> (kód obce), <code>mc=550973</code> (kód části) a stejné <code>ukazatel</code>, <code>od</code>, <code>do</code></td></tr>
+<tr><td><code>obyvatele/?graf=obec</code></td><td>jedna obec; <code>obec=582786</code></td></tr>
 </table>
 <footer>Zdrojový kód a postup aktualizace: <a href="https://github.com/opendatabrno/vizualizace">github.com/opendatabrno/vizualizace</a></footer>
 <script>
 const GRAFY=[
  ['cizinci/?graf=mapa','Cizinci v okresech','Podíl cizinců na obyvatelích okresů od roku 2013, po kliknutí na okres státy, odkud jeho cizinci jsou.',640],
- ['cizinci/?graf=vyvoj','Cizinci po měsících','Vývoj počtu cizinců v ČR od ledna 2007, celkem podle druhu pobytu nebo podle států.',720],
- ['cizinci/?graf=vyvoj&rezim=staty&staty=UKR,SVK,VNM,RUS,PHL,IND&osa=log','Hlavní státy na logaritmické ose','Na logaritmické ose je vidět i růst menších skupin, např. Filipín a Indie.',760]];
+ ['cizinci/?graf=vyvoj','Cizinci po měsících','Vývoj počtu cizinců v ČR od ledna 2007, celkem podle druhu pobytu nebo podle států (i na logaritmické ose).',720]];
+const GRAFY2=[
+ ['obyvatele/?graf=mapa','Obyvatelé obcí','Mapa všech obcí ČR: kde od roku 2014 obyvatel přibylo a kde ubylo, změna občanů ČR bez cizinců a podíl cizinců. Kraj lze přiblížit, obec vyhledat.',720],
+ ['obyvatele/?graf=mesto&mesto=582786','Městské části','Totéž za městské části a obvody osmi statutárních měst (Praha, Brno, Ostrava, Plzeň, Pardubice, Opava, Liberec, Ústí nad Labem) s pořadím částí.',900],
+ ['obyvatele/?graf=obec&obec=582786','Jedna obec','Vývoj počtu obyvatel jedné obce po letech, občané a cizinci. Hodí se k vložení na web obce (parametr obec = kód obce ČSÚ).',520]];
 const base=location.href.replace(/[^/]*([?#].*)?$/,'');
-document.getElementById('grid').innerHTML=GRAFY.map(([u,t,p,h],i)=>{
+const karty=(seznam,od)=>seznam.map(([u,t,p,h],j)=>{const i=od+j;
  const kod=`<iframe src="${base}${u.replace(/&/g,'&amp;')}" width="100%" height="${h}" style="border:0" loading="lazy" title="${t}"></iframe>`;
  return `<div class="karta"><iframe src="${u}" loading="lazy" title="${t}"></iframe><div><h3><a href="${u}">${t}</a></h3><p>${p}</p>
  <div class="kod"><input readonly value="${kod.replace(/"/g,'&quot;')}" aria-label="Kód pro vložení: ${t}" id="k${i}"><button data-i="${i}">Kopírovat</button></div></div></div>`}).join('');
+document.getElementById('grid').innerHTML=karty(GRAFY,0);
+document.getElementById('grid2').innerHTML=karty(GRAFY2,GRAFY.length);
 document.querySelectorAll('.kod button').forEach(b=>b.onclick=()=>{const v=document.getElementById('k'+b.dataset.i);
  (navigator.clipboard?navigator.clipboard.writeText(v.value):Promise.reject()).then(()=>{b.textContent='Zkopírováno'},()=>{v.select();document.execCommand('copy');b.textContent='Zkopírováno'});
  setTimeout(()=>b.textContent='Kopírovat',1800)});

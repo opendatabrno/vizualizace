@@ -1,5 +1,6 @@
 # generuje scripts/build_data.py při nasazení
 cizinci/*.json
+obyvatele/*.json
 _site/
 __pycache__/
 *.pyc

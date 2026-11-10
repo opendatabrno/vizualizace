@@ -42,7 +42,7 @@ jobs:
       - name: Sestavení webu
         run: |
           mkdir _site
-          cp -r index.html cizinci podklady _site/
+          cp -r index.html cizinci obyvatele podklady _site/
           touch _site/.nojekyll
 
       - uses: actions/configure-pages@v5

@@ -147,9 +147,11 @@ function mapa(D,H){
 function vyvoj(D){
  const M=D.mesice,n=M.length,ctl=$('ctl'),info=$('info'),obsah=$('obsah');
  const CL=['#e0454f','#3d8fd1','#3aa66b','#e8891d','#9b5fd6','#c9a227','#2a9d9a','#d46fb0','#8c564b','#7f8c8d','#9bbd22','#1f4f9a'];
- const barva={};D.staty.forEach((s,i)=>barva[s.kod]=CL[i%CL.length]);
+ // barvy se přidělují vybraným státům podle pořadí výběru, takže se dvě čáry nikdy nepotkají ve stejné barvě
+ const barva={},obarvi=()=>{const pouzite=new Set();for(const k of Object.keys(barva))if(!vybrane.includes(k))delete barva[k];else pouzite.add(barva[k]);
+  vybrane.forEach(k=>{if(!barva[k]){barva[k]=CL.find(c=>!pouzite.has(c))||CL[0];pouzite.add(barva[k])}})};
  let rezim=Q.get('rezim')==='staty'?'staty':'celkem';
- let vybrane=(Q.get('staty')||'UKR,SVK,VNM,RUS,PHL').split(',').filter(k=>barva[k]);
+ const znamy=new Set(D.staty.map(s=>s.kod));let vybrane=(Q.get('staty')||'UKR,SVK,VNM,RUS,PHL').split(',').filter(k=>znamy.has(k));
  let od=Math.max(0,M.indexOf((Q.get('od')||'2007')+'-01')),log=Q.get('osa')==='log';
  const ZLOMY=[['2009-01','hospodářská krize','Po roce 2008 kvůli hospodářské krizi cizinců ubývalo až do konce roku 2011.'],
   ['2011-12','změna evidence','V prosinci 2011 přibylo 30 tisíc přechodných pobytů občanů mimo EU. Skok je přímo v datech MV, jde nejspíš o změnu evidence, ne o skutečný příchod.'],
@@ -168,8 +170,12 @@ function vyvoj(D){
  so.onchange=()=>{od=M.indexOf(so.value+'-01');kresli()};ctl.appendChild(so);
  const bl=document.createElement('button');bl.textContent='Logaritmická osa';bl.title='Na logaritmické ose je stejně velký růst o stejné procento stejně strmý, malé státy pak nezaniknou vedle Ukrajiny.';bl.onclick=()=>{log=!log;kresli()};ctl.appendChild(bl);
  const chips=document.createElement('div');chips.className='ctl';chips.style.margin='0';chips.style.flexBasis='100%';
- D.staty.forEach(s=>{const b=document.createElement('button');b.className='chip';b.dataset.k=s.kod;b.innerHTML=`<i style="background:${barva[s.kod]}"></i>${esc(s.n)}`;
+ D.staty.forEach(s=>{const b=document.createElement('button');b.className='chip';b.dataset.k=s.kod;if(!s.hlavni)b.dataset.dalsi=1;b.innerHTML=`<i></i>${esc(s.n)}`;
   b.onclick=()=>{vybrane=vybrane.includes(s.kod)?vybrane.filter(k=>k!==s.kod):[...vybrane,s.kod];kresli()};chips.appendChild(b)});
+ // ostatní státy (kdykoli aspoň 100 lidí) ze seznamu; přidaný stát dostane vlastní tlačítko
+ const sd=document.createElement('select');sd.setAttribute('aria-label','Přidat další stát');
+ sd.add(new Option('+ další stát…',''));D.staty.filter(s=>!s.hlavni).sort((x,y)=>x.n.localeCompare(y.n,'cs')).forEach(s=>sd.add(new Option(s.n,s.kod)));
+ sd.onchange=()=>{if(sd.value&&!vybrane.includes(sd.value))vybrane=[...vybrane,sd.value];sd.value='';kresli()};chips.appendChild(sd);
  ctl.appendChild(chips);
  obsah.innerHTML='<svg id="svg" role="img" aria-label="Vývoj počtu cizinců po měsících"></svg>';
  const svg=$('svg');
@@ -179,7 +185,7 @@ function vyvoj(D){
  function kresli(){
   sw.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===rezim));
   chips.style.display=bl.style.display=rezim==='staty'?'':'none';bl.setAttribute('aria-pressed',log);const lg=log&&rezim==='staty';
-  chips.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',vybrane.includes(b.dataset.k)));
+  obarvi();chips.querySelectorAll('.chip').forEach(b=>{const on=vybrane.includes(b.dataset.k);b.firstChild.style.background=on?barva[b.dataset.k]:'';b.setAttribute('aria-pressed',on);if(b.dataset.dalsi)b.style.display=on?'':'none'});
   $('sub').textContent=rezim==='celkem'?'Cizinci s povoleným pobytem podle druhu pobytu · celá ČR':'Cizinci s povoleným pobytem podle státní příslušnosti · celá ČR';
   $('hint').textContent=rezim==='celkem'?'Jak číst: plocha ukazuje všechny cizince s povoleným pobytem, tmavá část trvalý a světlá přechodný pobyt (od 2022 včetně dočasné ochrany). Najetím na graf zobrazíte čísla za měsíc, tečky na ose vysvětlují zlomy v řadě.':'Jak číst: každá čára je jeden stát. Státy přidáte nebo odeberete tlačítky nad grafem. Najetím na graf zobrazíte čísla za měsíc.';
   const W=Math.max(320,obsah.clientWidth||900),narrow=W<560,Hh=narrow?340:440,L=narrow?44:58,R=rezim==='staty'?(narrow?64:96):(narrow?10:16),T=34,B=28;

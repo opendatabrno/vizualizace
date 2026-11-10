@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="cs"><head><meta charset="utf-8"><title>Obyvatelé obcí ČR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Kde obyvatel přibývá a kde ubývá: všechny obce a městské části ČR od roku 2014.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--fg:#1c1c1c;--mut:#5a5a5a;--soft:#f3f3f3;--line:#d6d6d6;--grid:#ececec;--acc:#2f7f86;--hint:#45989c;
+ --d0:#8c2d04;--d1:#c6501a;--d2:#e8894a;--d3:#f6c79d;--d4:#f1efe9;--d5:#b9e0da;--d6:#6fbdb4;--d7:#2b8c88;--d8:#0f5b5d;
+ --q0:#eef6f5;--q1:#cfe8e5;--q2:#a6d6d1;--q3:#78c0ba;--q4:#4ca5a2;--q5:#2f878a;--q6:#1d6870;--q7:#114a52;
+ --hr:#ffffff;--okr:#7d8a8b;--kr:#3c4748;--sel:#e0454f;--obc:#2f7f86;--ciz:#e8891d;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-tema="svetle"]){--bg:#141718;--fg:#e9ecec;--mut:#a7b0b1;--soft:#1f2425;--line:#384042;--grid:#262c2d;--acc:#6cc3c4;
+ --d0:#f08a4b;--d1:#c9632c;--d2:#8f4a26;--d3:#553223;--d4:#2a2d2d;--d5:#1f4a49;--d6:#2a7471;--d7:#45a39e;--d8:#86d6cd;
+ --q0:#1c3134;--q1:#1f4549;--q2:#235a5e;--q3:#2b7376;--q4:#3a8f8f;--q5:#56ada9;--q6:#7fcac3;--q7:#b5e6de;
+ --hr:#141718;--okr:#59686a;--kr:#b4c0c1;--sel:#ff6b72;--obc:#56ada9;--ciz:#f0a04b;color-scheme:dark}}
+:root[data-tema="tmave"]{--bg:#141718;--fg:#e9ecec;--mut:#a7b0b1;--soft:#1f2425;--line:#384042;--grid:#262c2d;--acc:#6cc3c4;
+ --d0:#f08a4b;--d1:#c9632c;--d2:#8f4a26;--d3:#553223;--d4:#2a2d2d;--d5:#1f4a49;--d6:#2a7471;--d7:#45a39e;--d8:#86d6cd;
+ --q0:#1c3134;--q1:#1f4549;--q2:#235a5e;--q3:#2b7376;--q4:#3a8f8f;--q5:#56ada9;--q6:#7fcac3;--q7:#b5e6de;
+ --hr:#141718;--okr:#59686a;--kr:#b4c0c1;--sel:#ff6b72;--obc:#56ada9;--ciz:#f0a04b;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.4 "IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;
+ padding:14px 16px calc(12px + env(safe-area-inset-bottom,0px));max-width:1180px;margin:0 auto}
+h1{margin:6px 0 4px;font-weight:700;font-size:clamp(26px,5.2vw,40px);line-height:1.1;letter-spacing:.01em;text-transform:uppercase}
+.sub{margin:0 0 16px;text-transform:uppercase;font-size:14px;color:var(--mut)}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin-bottom:12px}
+.ctl select,.ctl button,.ctl input{font:inherit;font-size:15px;color:var(--fg);padding:8px 12px;border:0;border-radius:3px;background:var(--soft)}
+.ctl select,.ctl button{cursor:pointer}.ctl input{min-width:0;flex:1 1 200px;max-width:320px}
+.ctl button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+.ctl label{color:var(--mut);font-size:14px}.skup{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+svg{display:block;width:100%;height:auto;font-family:inherit}
+#info{min-height:1.5em;margin:8px 0 4px;font-weight:600}
+#hint{margin:10px 0 2px;padding:8px 10px;background:var(--soft);border-left:3px solid var(--hint);font-size:14px}
+footer{margin-top:10px;color:var(--mut);font-size:12.5px}footer a{color:inherit}
+.mapa{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+@media (max-width:820px){.mapa{grid-template-columns:1fr}}
+.u{stroke:none;cursor:pointer}.jemne .u{stroke:var(--hr);stroke-width:.5px;vector-effect:non-scaling-stroke}
+.u:hover{stroke:var(--fg);stroke-width:1.5px;vector-effect:non-scaling-stroke}
+.cara{fill:none;pointer-events:none;vector-effect:non-scaling-stroke}
+.leg{display:flex;flex-wrap:wrap;margin:8px 0 0;font-size:12px;color:var(--mut)}
+.leg span{flex:1;min-width:38px;text-align:center}.leg span i{display:block;height:10px;margin-bottom:3px}
+.detail h2{margin:0 0 2px;font-size:22px;line-height:1.15}.detail .kraj{color:var(--mut);font-size:13.5px;text-transform:uppercase}
+.velke{font-size:40px;font-weight:700;line-height:1;margin:12px 0 2px}
+.detail .pozn{color:var(--mut);font-size:13.5px;margin:0 0 12px}
+.detail h3{font-size:13px;text-transform:uppercase;color:var(--mut);margin:16px 0 6px;font-weight:600}
+.tab{width:100%;border-collapse:collapse;font-size:14px}.tab td{padding:3px 0;border-bottom:1px solid var(--grid)}
+.tab td+td{text-align:right;font-variant-numeric:tabular-nums}
+.radek{display:grid;grid-template-columns:minmax(8em,11em) 1fr 4.5em;gap:6px;align-items:center;font-size:14px;margin:2px 0;cursor:pointer}
+.radek:hover{color:var(--acc)}.radek.on{font-weight:700}
+.radek .z{position:relative;height:14px}.radek .z i{position:absolute;top:0;height:14px;border-radius:2px}
+.radek .n{text-align:right;font-variant-numeric:tabular-nums}
+.osa{font-size:12px;fill:var(--mut)}.mrizka{stroke:var(--grid)}
+.zpet{font:inherit;font-size:13px;background:none;border:0;color:var(--acc);cursor:pointer;padding:0;margin-top:8px}
+</style></head><body>
+<div id="hd"><h1 id="h1">Obyvatelé obcí</h1><p class="sub" id="sub"></p></div>
+<div class="ctl" id="ctl"></div>
+<div id="obsah"></div>
+<div id="info">&nbsp;</div><p id="hint"></p><footer id="foot"></footer>
+<datalist id="seznam"></datalist>
+<script>
+const Q=new URLSearchParams(location.search),$=id=>document.getElementById(id);
+if(Q.get('tema')==='tmave'||Q.get('tema')==='svetle')document.documentElement.dataset.tema=Q.get('tema');
+if(Q.get('nadpis')==='0')$('hd').style.display='none';
+if(Q.get('ovladani')==='0')$('ctl').style.display='none';
+const G=Q.get('graf')||'mapa';
+const ZDROJ='Zdroj: informativní počty obyvatel MV ČR k 1. 1., zpracování <a href="https://github.com/opendatabrno/obyvatele">opendatabrno/obyvatele</a>';
+const cis=v=>v==null?'–':Math.round(v).toLocaleString('cs-CZ');
+const pct=(v,z)=>v==null||!isFinite(v)?'–':(z&&v>0?'+':'')+(v*100).toFixed(1).replace('.',',').replace('-','−')+' %';
+const kratce=v=>v>=1e6?(v/1e6).toFixed(1).replace('.',',').replace(',0','')+' mil.':v>=1e4?Math.round(v/1e3)+' tis.':v>=1e3?(v/1e3).toFixed(1).replace('.',',').replace(',0','')+' tis.':String(Math.round(v));
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+const nice=m=>{const p=Math.pow(10,Math.floor(Math.log10(m))),r=m/p;return (r<=1?1:r<=2?2:r<=2.5?2.5:r<=5?5:10)*p};
+const chyba=t=>{$('foot').textContent='Data se nepodařilo načíst ('+t+'). Stránka musí běžet přes web server, ne z disku.'};
+const nacti=u=>fetch(u,{cache:'no-cache'}).then(r=>{if(!r.ok)throw u;return r.json()});
+function tlacitka(rodic,volby,akt,fn){const g=document.createElement('div');g.className='skup';volby.forEach(([k,t])=>{const b=document.createElement('button');b.textContent=t;b.dataset.k=k;b.onclick=()=>fn(k);g.appendChild(b)});rodic.appendChild(g);
+ return k=>g.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===k))}
+function vyber(rodic,popis,volby,akt,fn){if(popis){const l=document.createElement('label');l.textContent=popis;rodic.appendChild(l)}
+ const s=document.createElement('select');s.setAttribute('aria-label',popis||'Výběr');volby.forEach(([v,t])=>s.add(new Option(t,v)));s.value=akt;s.onchange=()=>fn(s.value);rodic.appendChild(s);return s}
+function nastavUrl(par){const u=new URL(location);for(const [k,v] of Object.entries(par)){if(v==null||v==='')u.searchParams.delete(k);else u.searchParams.set(k,v)}history.replaceState(null,'',u)}
+
+/* ---------- ukazatele: změna obyvatel, změna občanů, podíl cizinců ---------- */
+const UKAZATELE=[['zmena','Změna obyvatel'],['obcane','Změna občanů ČR'],['cizinci','Podíl cizinců']];
+const PRAHY={zmena:[-.15,-.07,-.03,-.01,.01,.03,.07,.15],cizinci:[.01,.02,.04,.06,.1,.15,.25]};
+const MALE=50; // obce s méně obyvateli (hlavně vojenské újezdy) mají procenta náhodná, zůstanou šedé
+function hodnota(uk,r,a,b){ // r = [název, …, obyvatelé[], cizinci[]] ; a, b = indexy let
+ const o=r[2],c=r[3];if(o[b]!=null&&o[b]<MALE)return null;
+ if(uk==='cizinci')return o[b]?c[b]/o[b]:null;
+ if(uk==='obcane')return o[a]&&o[b]!=null?((o[b]-c[b])-(o[a]-c[a]))/(o[a]-c[a]):null;
+ return o[a]&&o[b]!=null?(o[b]-o[a])/o[a]:null}
+function barva(uk,v){if(v==null)return 'var(--soft)';const p=PRAHY[uk==='cizinci'?'cizinci':'zmena'];let i=0;while(i<p.length&&v>=p[i])i++;return uk==='cizinci'?`var(--q${i})`:`var(--d${i})`}
+function legenda(el,uk){const c=uk==='cizinci',p=PRAHY[c?'cizinci':'zmena'],f=v=>(c?'':v>0?'+':'')+String(Math.round(v*100)).replace('-','−')+' %';
+ el.innerHTML=[...p.map((v,i)=>`<span><i style="background:${c?`var(--q${i})`:`var(--d${i})`}"></i>${i?f(p[i-1])+' až '+f(v):'pod '+f(v)}</span>`),
+  `<span><i style="background:${c?'var(--q7)':'var(--d8)'}"></i>nad ${f(p[p.length-1])}</span>`,`<span><i style="background:var(--soft)"></i>pod ${MALE} obyv.</span>`].join('')}
+function textUkazatele(uk,ra,rb){return uk==='cizinci'?`Podíl cizinců na obyvatelích k 1. 1. ${rb}`:uk==='obcane'?`Změna počtu občanů ČR ${ra}–${rb} (bez cizinců)`:`Změna počtu obyvatel ${ra}–${rb}`}
+const HINT={zmena:'Jak číst: zelené obce mezi zvolenými roky rostly, oranžové se vylidňovaly. Od roku 2023 jsou v počtech i lidé s dočasnou ochranou z Ukrajiny. Kdo je chce vynechat, přepne na změnu občanů ČR.',
+ obcane:'Jak číst: změna počtu občanů ČR bez cizinců. Ukazuje stěhování a přirozený přírůstek bez vlivu migrace ze zahraničí, je na ní dobře vidět, jak rostou obce kolem velkých měst.',
+ cizinci:'Jak číst: kolik procent obyvatel obce tvoří cizinci s trvalým nebo přechodným pobytem (od roku 2023 včetně dočasné ochrany).'};
+
+/* sparkline obyvatel a občanů */
+function graf(roky,o,c,W=280,H=110){
+ const ob=o.map((v,i)=>v==null?null:v-c[i]),mx=Math.max(...o.filter(v=>v!=null))*1.04||1,mn=Math.min(...ob.filter(v=>v!=null))*0.96;
+ const lo=mn>mx*0.5?nice((mx-mn)/4)*Math.floor(mn/nice((mx-mn)/4)):0;
+ const xs=i=>46+i*(W-52)/(roky.length-1),ys=v=>H-18-(H-26)*(v-lo)/(mx-lo);
+ const cara=a=>a.map((v,i)=>v==null?'':`${xs(i).toFixed(1)},${ys(v).toFixed(1)}`).filter(Boolean).join(' ');
+ const krok=nice((mx-lo)/3);let s='';for(let v=Math.ceil(lo/krok)*krok;v<=mx;v+=krok)s+=`<line class="mrizka" x1="46" x2="${W}" y1="${ys(v)}" y2="${ys(v)}"/><text class="osa" x="42" y="${ys(v)+4}" text-anchor="end">${kratce(v)}</text>`;
+ return `<svg viewBox="0 0 ${W} ${H}" aria-label="Vývoj počtu obyvatel">${s}<polyline points="${cara(o)}" fill="none" stroke="var(--fg)" stroke-width="2"/><polyline points="${cara(ob)}" fill="none" stroke="var(--obc)" stroke-width="2" stroke-dasharray="4 3"/>
+  <text class="osa" x="46" y="${H-2}">${roky[0]}</text><text class="osa" x="${W}" y="${H-2}" text-anchor="end">${roky[roky.length-1]}</text></svg>
+  <p class="pozn">Plná čára všichni obyvatelé, přerušovaná občané ČR.</p>`}
+function tabulka(roky,o,c){return `<table class="tab"><tr><td><b>rok</b></td><td><b>obyvatel</b></td><td><b>cizinců</b></td></tr>${roky.map((y,i)=>`<tr><td>${y}</td><td>${cis(o[i])}</td><td>${cis(c[i])}</td></tr>`).reverse().join('')}</table>`}
+
+if(G==='mesto')Promise.all([nacti('mestske_casti.json'),nacti('../podklady/mestske_casti.json')]).then(([d,h])=>mesto(d,h)).catch(()=>chyba('mestske_casti.json'));
+else if(G==='obec')nacti('obce.json').then(obec).catch(()=>chyba('obce.json'));
+else Promise.all([nacti('obce.json'),nacti('../podklady/obce.json')]).then(([d,h])=>mapa(d,h)).catch(()=>chyba('obce.json'));
+
+/* ================= MAPA OBCÍ ================= */
+function mapa(D,H){
+ const roky=D.roky,ctl=$('ctl'),N=roky.length;
+ let uk=UKAZATELE.some(u=>u[0]===Q.get('ukazatel'))?Q.get('ukazatel'):'zmena';
+ let a=Math.max(0,roky.indexOf(+Q.get('od'))),b=roky.indexOf(+Q.get('do'));if(b<0)b=N-1;if(a>=b)a=0;
+ let kraj=H.ramecky[Q.get('kraj')]?Q.get('kraj'):'',vyb=D.obce[Q.get('obec')]?Q.get('obec'):'582786';
+ $('h1').textContent='Obyvatelé obcí';
+ $('foot').innerHTML=ZDROJ+'; hranice '+esc(H.zdroj)+'.';
+ const pUk=tlacitka(ctl,UKAZATELE,uk,k=>{uk=k;kresli()});
+ const opt=roky.map(r=>[r,r]);
+ const sa=vyber(ctl,'od',opt,roky[a],v=>{a=roky.indexOf(+v);if(a>=b)b=Math.min(N-1,a+1);kresli()});
+ const sb=vyber(ctl,'do',opt,roky[b],v=>{b=roky.indexOf(+v);if(a>=b)a=Math.max(0,b-1);kresli()});
+ const sk=vyber(ctl,'',[['','Celá ČR'],...Object.keys(H.ramecky).map(k=>[k,D.kraje[k]||k])],kraj,v=>{kraj=v;zoom();kresli()});
+ const hl=document.createElement('input');hl.type='search';hl.placeholder='Najít obec…';hl.setAttribute('list','seznam');hl.setAttribute('aria-label','Najít obec');ctl.appendChild(hl);
+ const jmena={};$('seznam').innerHTML=Object.entries(D.obce).map(([k,r])=>{const t=`${r[0]} (${D.okresy[r[1]]||'—'})`;jmena[t]=k;return `<option value="${esc(t)}">`}).join('');
+ hl.onchange=()=>{const k=jmena[hl.value];if(k){vyb=k;kraj=D.obce[k][1].slice(0,5);if(!H.ramecky[kraj])kraj='';sk.value=kraj;zoom();kresli();hl.value='';hl.blur()}};
+ $('obsah').innerHTML=`<div class="mapa"><div><svg id="svg" viewBox="${H.viewBox}" role="img" aria-label="Mapa obcí ČR"></svg><div class="leg" id="leg"></div></div><div class="detail" id="detail"></div></div>`;
+ const svg=$('svg');let s='<g id="u">';
+ for(const [k,d] of Object.entries(H.obce))if(D.obce[k])s+=`<path class="u" data-k="${k}" d="${d}"/>`;
+ s+=`</g><path class="cara" d="${H.okresy}" stroke="var(--okr)" stroke-width=".6"/><path class="cara" d="${H.kraje}" stroke="var(--kr)" stroke-width="1.2"/><path class="cara" d="${H.stat}" stroke="var(--kr)" stroke-width="1.6"/><g id="vyb"></g>`;
+ svg.innerHTML=s;
+ const cesty=[...svg.querySelectorAll('.u')];
+ svg.addEventListener('mouseover',e=>{const k=e.target.dataset&&e.target.dataset.k;if(!k)return;const r=D.obce[k];$('info').textContent=`${r[0]} (${D.okresy[r[1]]||''}): ${pct(hodnota(uk,r,a,b),uk!=='cizinci')} · ${cis(r[2][b])} obyvatel`});
+ svg.addEventListener('mouseleave',()=>{$('info').innerHTML='&nbsp;'});
+ svg.addEventListener('click',e=>{const k=e.target.dataset&&e.target.dataset.k;if(k){vyb=k;kresli()}});
+ function zoom(){const [x,y,w,h]=kraj?H.ramecky[kraj]:H.viewBox.split(' ').map(Number),p=kraj?Math.max(w,h)*0.04:0;
+  svg.setAttribute('viewBox',`${x-p} ${y-p} ${w+2*p} ${h+2*p}`);svg.classList.toggle('jemne',!!kraj)}
+ function detail(){
+  const r=D.obce[vyb],o=r[2],c=r[3],v=hodnota(uk,r,a,b),cr=[D.cr[0],D.cr[1]];const crr=['',r[1],cr[0],cr[1]];
+  $('detail').innerHTML=`<h2>${esc(r[0])}</h2><div class="kraj">okres ${esc(D.okresy[r[1]]||'—')}</div>
+   <div class="velke">${pct(v,uk!=='cizinci')}</div><p class="pozn">${esc(textUkazatele(uk,roky[a],roky[b]))} · ČR ${pct(hodnota(uk,crr,a,b),uk!=='cizinci')}<br>
+   ${cis(o[b])} obyvatel k 1. 1. ${roky[b]}${uk!=='cizinci'?` (${roky[a]}: ${cis(o[a])})`:''}, z toho ${cis(c[b])} cizinců</p>
+   <h3>Obyvatelé ${roky[0]}–${roky[N-1]}</h3>${graf(roky,o,c)}
+   <details><summary class="zpet">Tabulka po letech</summary>${tabulka(roky,o,c)}</details>
+   <p class="pozn" style="margin-top:10px"><a href="?graf=obec&obec=${vyb}" style="color:var(--acc)">Graf jen pro tuto obec</a> (k vložení na web obce)</p>`}
+ function kresli(){
+  pUk(uk);sa.value=roky[a];sb.value=roky[b];sa.disabled=uk==='cizinci';sa.style.opacity=uk==='cizinci'?.4:1;
+  $('sub').textContent=textUkazatele(uk,roky[a],roky[b])+(kraj?' · '+(D.kraje[kraj]||''):' · všechny obce ČR');
+  $('hint').textContent=HINT[uk];
+  for(const p of cesty)p.style.fill=barva(uk,hodnota(uk,D.obce[p.dataset.k],a,b));
+  const sel=svg.querySelector(`.u[data-k="${vyb}"]`);
+  $('vyb').innerHTML=sel?`<path class="cara" d="${sel.getAttribute('d')}" stroke="var(--sel)" stroke-width="2.4"/>`:'';
+  legenda($('leg'),uk);detail();
+  nastavUrl({ukazatel:uk==='zmena'?null:uk,od:uk==='cizinci'||a===0?null:roky[a],do:b===N-1?null:roky[b],kraj:kraj||null,obec:vyb})}
+ zoom();kresli();
+}
+
+/* ================= MĚSTSKÉ ČÁSTI ================= */
+function mesto(D,H){
+ const roky=D.roky,ctl=$('ctl'),N=roky.length,mesta=Object.keys(D.mesta).filter(k=>H.mesta[k]).sort((x,y)=>D.mesta[x].nazev.localeCompare(D.mesta[y].nazev,'cs'));
+ let m=D.mesta[Q.get('mesto')]?Q.get('mesto'):'582786';
+ let uk=UKAZATELE.some(u=>u[0]===Q.get('ukazatel'))?Q.get('ukazatel'):'zmena';
+ let a=Math.max(0,roky.indexOf(+Q.get('od'))),b=roky.indexOf(+Q.get('do'));if(b<0)b=N-1;if(a>=b)a=0;
+ let vyb=Q.get('mc');
+ $('foot').innerHTML=ZDROJ+'; hranice '+esc(H.zdroj)+'.';
+ vyber(ctl,'',mesta.map(k=>[k,D.mesta[k].nazev]),m,v=>{m=v;vyb=null;kresli()});
+ const pUk=tlacitka(ctl,UKAZATELE,uk,k=>{uk=k;kresli()});
+ const opt=roky.map(r=>[r,r]);
+ const sa=vyber(ctl,'od',opt,roky[a],v=>{a=roky.indexOf(+v);if(a>=b)b=Math.min(N-1,a+1);kresli()});
+ const sb=vyber(ctl,'do',opt,roky[b],v=>{b=roky.indexOf(+v);if(a>=b)a=Math.max(0,b-1);kresli()});
+ $('obsah').innerHTML=`<div class="mapa"><div><svg id="svg" role="img" aria-label="Mapa městských částí"></svg><div class="leg" id="leg"></div><h3 style="font-size:13px;text-transform:uppercase;color:var(--mut);margin:18px 0 6px">Pořadí částí</h3><div id="poradi"></div></div><div class="detail" id="detail"></div></div>`;
+ const svg=$('svg');
+ svg.addEventListener('mouseover',e=>{const k=e.target.dataset&&e.target.dataset.k;if(!k)return;const r=D.mesta[m].casti[k];$('info').textContent=`${r[0]}: ${pct(hodnota(uk,r,a,b),uk!=='cizinci')} · ${cis(r[1][b])} obyvatel`});
+ svg.addEventListener('mouseleave',()=>{$('info').innerHTML='&nbsp;'});
+ svg.addEventListener('click',e=>{const k=e.target.dataset&&e.target.dataset.k;if(k){vyb=k;kresli()}});
+ const rr=r=>['',null,r[1],r[2]]; // MČ: [název, obyvatelé[], cizinci[]] -> tvar řádku obce
+ function kresli(){
+  const M=D.mesta[m],HM=H.mesta[m],[x,y,w,h]=HM.box,p=Math.max(w,h)*.03;
+  if(!M.casti[vyb])vyb=Object.entries(M.casti).sort((q,r)=>r[1][1][N-1]-q[1][1][N-1])[0][0];
+  $('h1').textContent=M.nazev+': městské části';
+  $('sub').textContent=textUkazatele(uk,roky[a],roky[b]);$('hint').textContent=HINT[uk]+' Kliknutím na část mapy nebo řádek pořadí zobrazíte podrobnosti.';
+  pUk(uk);sa.value=roky[a];sb.value=roky[b];sa.disabled=uk==='cizinci';sa.style.opacity=uk==='cizinci'?.4:1;
+  svg.setAttribute('viewBox',`${x-p} ${y-p} ${w+2*p} ${h+2*p}`);
+  let s='';for(const [k,c] of Object.entries(HM.casti)){const r=M.casti[k];s+=`<path class="u" style="stroke:var(--hr);stroke-width:1px;vector-effect:non-scaling-stroke;fill:${r?barva(uk,hodnota(uk,rr(r),a,b)):'var(--soft)'}" data-k="${k}" d="${c.d}"><title>${esc(c.nazev)}</title></path>`}
+  s+=`<path class="cara" d="${HM.obrys}" stroke="var(--kr)" stroke-width="1.6"/>`;
+  if(HM.casti[vyb])s+=`<path class="cara" d="${HM.casti[vyb].d}" stroke="var(--sel)" stroke-width="2.6"/>`;
+  svg.innerHTML=s;legenda($('leg'),uk);
+  // pořadí
+  const rad=Object.entries(M.casti).map(([k,r])=>[k,r,hodnota(uk,rr(r),a,b)]).filter(q=>q[2]!=null).sort((q,r)=>r[2]-q[2]);
+  const mx=Math.max(...rad.map(q=>Math.abs(q[2])),.01),zero=uk==='cizinci'?0:Math.max(0,-Math.min(...rad.map(q=>q[2])))/(mx+Math.max(0,-Math.min(...rad.map(q=>q[2]))))*100;
+  const roz=uk==='cizinci'?mx:mx+Math.max(0,-Math.min(...rad.map(q=>q[2])));
+  $('poradi').innerHTML=rad.map(([k,r,v])=>{const w=Math.abs(v)/roz*100,l=v>=0?zero:zero-w;
+   return `<div class="radek${k===vyb?' on':''}" data-k="${k}"><span>${esc(r[0])}</span><div class="z"><i style="left:${l}%;width:${w}%;background:${barva(uk,v)}"></i></div><span class="n">${pct(v,uk!=='cizinci')}</span></div>`}).join('');
+  $('poradi').querySelectorAll('.radek').forEach(e=>e.onclick=()=>{vyb=e.dataset.k;kresli()});
+  const r=M.casti[vyb];
+  $('detail').innerHTML=`<h2>${esc(r[0])}</h2><div class="kraj">${esc(M.nazev)}</div><div class="velke">${pct(hodnota(uk,rr(r),a,b),uk!=='cizinci')}</div>
+   <p class="pozn">${esc(textUkazatele(uk,roky[a],roky[b]))}<br>${cis(r[1][b])} obyvatel k 1. 1. ${roky[b]}, z toho ${cis(r[2][b])} cizinců</p>
+   <h3>Obyvatelé ${roky[0]}–${roky[N-1]}</h3>${graf(roky,r[1],r[2])}<details><summary class="zpet">Tabulka po letech</summary>${tabulka(roky,r[1],r[2])}</details>`;
+  nastavUrl({mesto:m,mc:vyb,ukazatel:uk==='zmena'?null:uk,od:uk==='cizinci'||a===0?null:roky[a],do:b===N-1?null:roky[b]})}
+ kresli();
+}
+
+/* ================= JEDNA OBEC (k vložení na web obce) ================= */
+function obec(D){
+ const roky=D.roky,ctl=$('ctl'),N=roky.length;let k=D.obce[Q.get('obec')]?Q.get('obec'):'582786';
+ $('foot').innerHTML=ZDROJ+'.';
+ const hl=document.createElement('input');hl.type='search';hl.placeholder='Najít obec…';hl.setAttribute('list','seznam');hl.setAttribute('aria-label','Najít obec');ctl.appendChild(hl);
+ const jmena={};$('seznam').innerHTML=Object.entries(D.obce).map(([kod,r])=>{const t=`${r[0]} (${D.okresy[r[1]]||'—'})`;jmena[t]=kod;return `<option value="${esc(t)}">`}).join('');
+ hl.onchange=()=>{if(jmena[hl.value]){k=jmena[hl.value];hl.value='';kresli()}};
+ $('obsah').innerHTML='<svg id="svg" role="img" aria-label="Vývoj počtu obyvatel obce"></svg>';
+ const svg=$('svg');
+ function kresli(){
+  const r=D.obce[k],o=r[2],c=r[3];
+  $('h1').textContent=r[0];$('sub').textContent=`Počet obyvatel ${roky[0]}–${roky[N-1]} · okres ${D.okresy[r[1]]||'—'}`;
+  $('hint').textContent='Jak číst: sloupec je počet obyvatel k 1. lednu, modrozelená část jsou občané ČR, oranžová cizinci s trvalým nebo přechodným pobytem (od roku 2023 včetně dočasné ochrany).';
+  const W=Math.max(320,$('obsah').clientWidth||800),narrow=W<560,Hh=narrow?300:360,L=narrow?44:56,R=8,T=26,B=26;
+  svg.setAttribute('viewBox',`0 0 ${W} ${Hh}`);
+  const mx=Math.max(...o.filter(v=>v!=null)),krok=nice(mx/4),top=Math.ceil(mx*1.12/krok)*krok,ys=v=>Hh-B-(Hh-B-T)*v/top,bw=(W-L-R)/N;
+  let s='';for(let v=0;v<=top+1e-9;v+=krok)s+=`<line class="mrizka" x1="${L}" x2="${W-R}" y1="${ys(v)}" y2="${ys(v)}"/><text class="osa" x="${L-6}" y="${ys(v)+4}" text-anchor="end">${v?kratce(v):'0'}</text>`;
+  roky.forEach((y,i)=>{if(o[i]==null)return;const x=L+i*bw+bw*.14,w=bw*.72,ob=o[i]-c[i];
+   s+=`<g><title>${y}: ${cis(o[i])} obyvatel, z toho ${cis(c[i])} cizinců</title><rect x="${x}" y="${ys(ob)}" width="${w}" height="${ys(0)-ys(ob)}" fill="var(--obc)"/><rect x="${x}" y="${ys(o[i])}" width="${w}" height="${ys(ob)-ys(o[i])}" fill="var(--ciz)"/></g>`;
+   if(!narrow||i%2===0||i===N-1)s+=`<text class="osa" x="${x+w/2}" y="${Hh-8}" text-anchor="middle">${narrow?"'"+String(y).slice(2):y}</text>`;
+   if(!narrow&&(i===0||i===N-1))s+=`<text x="${x+w/2}" y="${ys(o[i])-6}" text-anchor="middle" font-size="13" font-weight="700" fill="var(--fg)">${cis(o[i])}</text>`});
+  svg.innerHTML=s;
+  const z=o[0]?(o[N-1]-o[0])/o[0]:null;
+  $('info').textContent=`${roky[0]} → ${roky[N-1]}: ${cis(o[0])} → ${cis(o[N-1])} obyvatel (${pct(z,true)}), cizinci ${pct(c[N-1]/o[N-1])}`;
+  nastavUrl({graf:'obec',obec:k})}
+ kresli();let t;addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(kresli,150)});
+}
+</script></body></html>
