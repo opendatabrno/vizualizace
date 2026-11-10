@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="cs"><head><meta charset="utf-8"><title>Vizualizace dat</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Interaktivní grafy nad otevřenými datovými sadami opendatabrno, připravené pro vložení na web.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--fg:#1c1c1c;--mut:#5a5a5a;--soft:#f3f3f3;--line:#d6d6d6;--acc:#2f7f86;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#141718;--fg:#e9ecec;--mut:#a7b0b1;--soft:#1f2425;--line:#384042;--acc:#6cc3c4;color-scheme:dark}}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:16px/1.45 "IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;padding:18px 16px 28px;max-width:1180px;margin:0 auto}
+h1{margin:6px 0 4px;font-size:clamp(28px,5.4vw,42px);line-height:1.1;text-transform:uppercase}
+.sub{margin:0 0 26px;color:var(--mut);text-transform:uppercase;font-size:14px}
+h2{font-size:20px;text-transform:uppercase;margin:30px 0 4px}h2+p{margin:0 0 14px;color:var(--mut)}
+a{color:var(--acc)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,520px),1fr));gap:20px}
+.karta{border:1px solid var(--line);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
+.karta iframe{width:100%;height:520px;border:0;display:block;background:var(--bg)}
+.karta div{padding:12px 14px;border-top:1px solid var(--line)}
+.karta h3{margin:0 0 4px;font-size:18px}.karta p{margin:0 0 10px;color:var(--mut);font-size:14.5px}
+.kod{display:flex;gap:6px}.kod input{flex:1;min-width:0;font:13px ui-monospace,Consolas,monospace;padding:7px 8px;border:1px solid var(--line);border-radius:3px;background:var(--soft);color:var(--fg)}
+.kod button{font:inherit;font-size:14px;padding:6px 12px;border:0;border-radius:3px;background:var(--acc);color:var(--bg);cursor:pointer}
+.param{border-collapse:collapse;font-size:14.5px;width:100%}.param td{padding:6px 8px;border-top:1px solid var(--line);vertical-align:top}
+.param code{white-space:nowrap}footer{margin-top:28px;color:var(--mut);font-size:13px}
+</style></head><body>
+<h1>Vizualizace dat</h1><p class="sub">Interaktivní grafy nad otevřenými daty · k vložení na web jako iframe</p>
+
+<h2>Cizinci s povoleným pobytem</h2>
+<p>Data: <a href="https://github.com/opendatabrno/cizinci">opendatabrno/cizinci</a> (MV ČR) a
+<a href="https://github.com/opendatabrno/obyvatele">opendatabrno/obyvatele</a>.</p>
+<div class="grid" id="grid"></div>
+
+<h2>Parametry</h2>
+<p>Do adresy grafu lze přidat parametry, např. <code>cizinci/?graf=mapa&amp;okres=CZ0642&amp;nadpis=0</code>.</p>
+<table class="param">
+<tr><td><code>nadpis=0</code></td><td>skryje nadpis (hodí se, když ho má stránka, do které graf vkládáte)</td></tr>
+<tr><td><code>ovladani=0</code></td><td>skryje ovládací prvky; graf ukáže stav podle ostatních parametrů</td></tr>
+<tr><td><code>tema=svetle</code> / <code>tema=tmave</code></td><td>vynutí světlé nebo tmavé barvy (jinak podle nastavení zařízení)</td></tr>
+<tr><td><code>graf=mapa</code></td><td>mapa okresů; dál <code>rok=2025</code>, <code>okres=CZ0642</code> (kód okresu NUTS/LAU), <code>ukazatel=pocet</code> (počet místo podílu)</td></tr>
+<tr><td><code>graf=vyvoj</code></td><td>měsíční vývoj; dál <code>rezim=staty</code>, <code>staty=UKR,SVK,VNM</code> (kódy ISO), <code>od=2015</code>, <code>osa=log</code></td></tr>
+</table>
+<footer>Zdrojový kód a postup aktualizace: <a href="https://github.com/opendatabrno/vizualizace">github.com/opendatabrno/vizualizace</a></footer>
+<script>
+const GRAFY=[
+ ['cizinci/?graf=mapa','Cizinci v okresech','Podíl cizinců na obyvatelích okresů od roku 2013, po kliknutí na okres státy, odkud jeho cizinci jsou.',640],
+ ['cizinci/?graf=vyvoj','Cizinci po měsících','Vývoj počtu cizinců v ČR od ledna 2007, celkem podle druhu pobytu nebo podle států.',720],
+ ['cizinci/?graf=vyvoj&rezim=staty&staty=UKR,SVK,VNM,RUS,PHL,IND&osa=log','Hlavní státy na logaritmické ose','Na logaritmické ose je vidět i růst menších skupin, např. Filipín a Indie.',760]];
+const base=location.href.replace(/[^/]*([?#].*)?$/,'');
+document.getElementById('grid').innerHTML=GRAFY.map(([u,t,p,h],i)=>{
+ const kod=`<iframe src="${base}${u.replace(/&/g,'&amp;')}" width="100%" height="${h}" style="border:0" loading="lazy" title="${t}"></iframe>`;
+ return `<div class="karta"><iframe src="${u}" loading="lazy" title="${t}"></iframe><div><h3><a href="${u}">${t}</a></h3><p>${p}</p>
+ <div class="kod"><input readonly value="${kod.replace(/"/g,'&quot;')}" aria-label="Kód pro vložení: ${t}" id="k${i}"><button data-i="${i}">Kopírovat</button></div></div></div>`}).join('');
+document.querySelectorAll('.kod button').forEach(b=>b.onclick=()=>{const v=document.getElementById('k'+b.dataset.i);
+ (navigator.clipboard?navigator.clipboard.writeText(v.value):Promise.reject()).then(()=>{b.textContent='Zkopírováno'},()=>{v.select();document.execCommand('copy');b.textContent='Zkopírováno'});
+ setTimeout(()=>b.textContent='Kopírovat',1800)});
+</script></body></html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="cs"><head><meta charset="utf-8"><title>Cizinci v ČR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Cizinci s povoleným pobytem v ČR: podíl v okresech a vývoj po měsících od roku 2007.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--fg:#1c1c1c;--mut:#5a5a5a;--soft:#f3f3f3;--line:#d6d6d6;--grid:#ececec;--acc:#2f7f86;--hint:#45989c;
+ --q0:#eef6f5;--q1:#cfe8e5;--q2:#a6d6d1;--q3:#78c0ba;--q4:#4ca5a2;--q5:#2f878a;--q6:#1d6870;--q7:#114a52;--nd:#e4e4e4;
+ --hr:#fff;--kr:#5b6b6c;--st:#2b2b2b;--sel:#e0454f;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-tema="svetle"]){--bg:#141718;--fg:#e9ecec;--mut:#a7b0b1;--soft:#1f2425;--line:#384042;--grid:#262c2d;--acc:#6cc3c4;--hint:#45989c;
+ --q0:#1c3134;--q1:#1f4549;--q2:#235a5e;--q3:#2b7376;--q4:#3a8f8f;--q5:#56ada9;--q6:#7fcac3;--q7:#b5e6de;--nd:#2a2f30;
+ --hr:#141718;--kr:#9aa8a9;--st:#d9dede;--sel:#ff6b72;color-scheme:dark}}
+:root[data-tema="tmave"]{--bg:#141718;--fg:#e9ecec;--mut:#a7b0b1;--soft:#1f2425;--line:#384042;--grid:#262c2d;--acc:#6cc3c4;--hint:#45989c;
+ --q0:#1c3134;--q1:#1f4549;--q2:#235a5e;--q3:#2b7376;--q4:#3a8f8f;--q5:#56ada9;--q6:#7fcac3;--q7:#b5e6de;--nd:#2a2f30;
+ --hr:#141718;--kr:#9aa8a9;--st:#d9dede;--sel:#ff6b72;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.4 "IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;
+ padding:14px 16px calc(12px + env(safe-area-inset-bottom,0px));max-width:1180px;margin:0 auto}
+h1{margin:6px 0 4px;font-weight:700;font-size:clamp(26px,5.2vw,40px);line-height:1.1;letter-spacing:.01em;text-transform:uppercase}
+.sub{margin:0 0 16px;text-transform:uppercase;font-size:14px;color:var(--mut)}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin-bottom:12px}
+.ctl select,.ctl button{font:inherit;font-size:15px;color:var(--fg);padding:8px 12px;border:0;border-radius:3px;background:var(--soft);cursor:pointer}
+.ctl button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+.ctl label{color:var(--mut);font-size:14px}
+.rok{display:flex;align-items:center;gap:10px;flex:1;min-width:240px}
+.rok input{flex:1;accent-color:var(--acc)}.rok b{font-size:22px;min-width:3ch}
+.chip{font:inherit;font-size:14px;padding:4px 11px 4px 9px;border:2px solid var(--line);border-radius:15px;background:transparent;color:var(--mut);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.chip i{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.ctl .chip{background:transparent}.ctl .chip[aria-pressed="true"]{background:transparent;color:var(--fg);border-color:var(--mut)}
+.chip:not([aria-pressed="true"]) i{opacity:.35}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+svg{display:block;width:100%;height:auto;font-family:inherit}
+#info{min-height:1.5em;margin:8px 0 4px;font-weight:600}
+#hint{margin:10px 0 2px;padding:8px 10px;background:var(--soft);border-left:3px solid var(--hint);font-size:14px}
+footer{margin-top:10px;color:var(--mut);font-size:12.5px}footer a{color:inherit}
+/* mapa */
+.mapa{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+@media (max-width:820px){.mapa{grid-template-columns:1fr}}
+.okres{stroke:var(--hr);stroke-width:.6;cursor:pointer;transition:fill .35s}
+.okres:hover{stroke:var(--fg);stroke-width:1.4}
+.okres.vybrany{stroke:var(--sel);stroke-width:2.2}
+.leg{display:flex;flex-wrap:wrap;gap:0;margin:8px 0 0;font-size:12.5px;color:var(--mut)}
+.leg span{flex:1;min-width:34px;text-align:center}.leg span i{display:block;height:10px;margin-bottom:3px}
+.detail h2{margin:0 0 2px;font-size:22px;line-height:1.15}.detail .kraj{color:var(--mut);font-size:13.5px;text-transform:uppercase}
+.velke{font-size:40px;font-weight:700;line-height:1;margin:12px 0 2px}
+.detail .pozn{color:var(--mut);font-size:13.5px;margin:0 0 12px}
+.radek{display:grid;grid-template-columns:9.5em 1fr 4.2em;gap:6px;align-items:center;font-size:14px;margin:3px 0}
+.radek .b{height:14px;background:var(--q4);border-radius:2px}
+.radek .n{text-align:right;font-variant-numeric:tabular-nums}
+.detail h3{font-size:13px;text-transform:uppercase;color:var(--mut);margin:16px 0 6px;font-weight:600}
+/* vývoj */
+.osa{font-size:12px;fill:var(--mut)}.mrizka{stroke:var(--grid)}
+.zlom line{stroke:var(--mut);stroke-dasharray:3 3}.zlom text{font-size:11.5px;fill:var(--mut)}
+.zlom circle{fill:var(--bg);stroke:var(--mut)}
+.kurzor{stroke:var(--fg);stroke-opacity:.5}
+.mezera{fill:var(--soft)}
+</style></head><body>
+<div id="hd"><h1 id="h1">Cizinci v ČR</h1><p class="sub" id="sub"></p></div>
+<div class="ctl" id="ctl"></div>
+<div id="obsah"></div>
+<div id="info">&nbsp;</div><p id="hint"></p><footer id="foot"></footer>
+<script>
+const Q=new URLSearchParams(location.search),$=id=>document.getElementById(id);
+if(Q.get('tema')==='tmave'||Q.get('tema')==='svetle')document.documentElement.dataset.tema=Q.get('tema');
+if(Q.get('nadpis')==='0')$('hd').style.display='none';
+if(Q.get('ovladani')==='0')$('ctl').style.display='none';
+const G=Q.get('graf')||'mapa';
+const ZDROJ='Zdroj: MV ČR a Služba cizinecké policie, zpracování <a href="https://github.com/opendatabrno/cizinci">opendatabrno/cizinci</a>';
+const cis=v=>Math.round(v).toLocaleString('cs-CZ');
+const pct=v=>(v*100).toFixed(1).replace('.',',')+' %';
+const kratce=v=>v>=1e6?(v/1e6).toFixed(v%1e6?2:0).replace('.',',').replace(/,?0+$/,'')+' mil.':v>=1e3?Math.round(v/1e3)+' tis.':String(v);
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+const nice=m=>{const p=Math.pow(10,Math.floor(Math.log10(m))),r=m/p;return (r<=1?1:r<=2?2:r<=2.5?2.5:r<=5?5:10)*p};
+const MESICE=['leden','únor','březen','duben','květen','červen','červenec','srpen','září','říjen','listopad','prosinec'];
+const mesic=m=>MESICE[+m.slice(5,7)-1]+' '+m.slice(0,4);
+const chyba=t=>{$('foot').textContent='Data se nepodařilo načíst ('+t+'). Stránka musí běžet přes web server, ne z disku.'};
+const nacti=u=>fetch(u,{cache:'no-cache'}).then(r=>{if(!r.ok)throw u;return r.json()});
+
+if(G==='vyvoj')nacti('vyvoj.json').then(vyvoj).catch(()=>chyba('vyvoj.json'));
+else Promise.all([nacti('mapa.json'),nacti('../podklady/okresy.json')]).then(([d,h])=>mapa(d,h)).catch(()=>chyba('mapa.json'));
+
+/* ================= MAPA: podíl cizinců v okresech ================= */
+function mapa(D,H){
+ const roky=D.roky,ctl=$('ctl'),info=$('info');
+ let ri=roky.indexOf(+Q.get('rok'));if(ri<0)ri=roky.length-1;
+ let uk=Q.get('ukazatel')==='pocet'?'pocet':'podil';
+ let vyb=D.okresy[Q.get('okres')]?Q.get('okres'):'CZ0642';
+ const PRAHY={podil:[.02,.04,.06,.08,.11,.15,.2],pocet:[1000,2000,4000,8000,15000,30000,60000]};
+ $('h1').textContent='Cizinci v okresech';
+ $('hint').textContent='Jak číst: barva ukazuje, jaký podíl obyvatel okresu tvoří cizinci s povoleným pobytem. Posuvníkem měníte rok, kliknutím na okres zobrazíte, odkud jeho cizinci pocházejí. Od roku 2022 jsou v číslech i lidé s dočasnou ochranou z Ukrajiny.';
+ $('foot').innerHTML=ZDROJ+'; počty obyvatel MV k 1. 1. (<a href="https://github.com/opendatabrno/obyvatele">opendatabrno/obyvatele</a>); hranice '+esc(H.zdroj)+'.';
+ // ovládání
+ const r=document.createElement('div');r.className='rok';
+ r.innerHTML=`<button id="hraj" aria-label="Přehrát roky" title="Přehrát roky">▶</button><input id="posuv" type="range" min="0" max="${roky.length-1}" step="1" value="${ri}" aria-label="Rok"><b id="rokt"></b>`;
+ ctl.appendChild(r);
+ const pu=document.createElement('div');pu.style.display='flex';pu.style.gap='6px';
+ [['podil','Podíl na obyvatelích'],['pocet','Počet cizinců']].forEach(([k,t])=>{const b=document.createElement('button');b.textContent=t;b.dataset.k=k;b.onclick=()=>{uk=k;kresli()};pu.appendChild(b)});
+ ctl.appendChild(pu);
+ $('posuv').oninput=e=>{ri=+e.target.value;kresli()};
+ let timer=null;$('hraj').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('hraj').textContent='▶';return}
+  if(ri===roky.length-1)ri=0;$('hraj').textContent='❚❚';kresli();
+  timer=setInterval(()=>{if(ri>=roky.length-1){clearInterval(timer);timer=null;$('hraj').textContent='▶';return}ri++;kresli()},900)};
+ // mapa
+ const obsah=$('obsah');obsah.innerHTML=`<div class="mapa"><div><svg id="svg" viewBox="${H.viewBox}" role="img" aria-label="Mapa okresů ČR"></svg><div class="leg" id="leg"></div></div><div class="detail" id="detail"></div></div>`;
+ const svg=$('svg');let s='<g id="okresy">';
+ for(const [k,o] of Object.entries(H.okresy))if(D.okresy[k])s+=`<path class="okres" data-k="${k}" d="${o.d}"><title></title></path>`;
+ s+=`</g><path d="${H.kraje}" fill="none" stroke="var(--kr)" stroke-width="1.3" pointer-events="none"/><path d="${H.stat}" fill="none" stroke="var(--st)" stroke-width="1.6" pointer-events="none"/><g id="vyber" pointer-events="none"></g>`;
+ svg.innerHTML=s;
+ const cesty=[...svg.querySelectorAll('.okres')];
+ const hodnota=(k,i)=>{const o=D.okresy[k];return uk==='podil'?o.c[i]/o.o[i]:o.c[i]};
+ const fmt=v=>uk==='podil'?pct(v):cis(v);
+ const trida=v=>{const p=PRAHY[uk];let i=0;while(i<p.length&&v>=p[i])i++;return i};
+ cesty.forEach(p=>{const k=p.dataset.k;
+  p.onmouseenter=()=>{const o=D.okresy[k];info.textContent=`${o.n}: ${fmt(hodnota(k,ri))} (${cis(o.c[ri])} cizinců)`};
+  p.onmouseleave=()=>{info.innerHTML='&nbsp;'};
+  p.onclick=()=>{vyb=k;kresli()}});
+ function legenda(){const p=PRAHY[uk],f=v=>uk==='podil'?Math.round(v*100)+' %':kratce(v);
+  $('leg').innerHTML=[...p.map((v,i)=>`<span><i style="background:var(--q${i})"></i>${i?f(p[i-1])+'–':'< '}${i?f(v):f(v)}</span>`),`<span><i style="background:var(--q7)"></i>${f(p[p.length-1])} +</span>`].join('')}
+ function detail(){
+  const o=D.okresy[vyb],i=ri,cr=D.cr.c[i]/D.cr.o[i],podil=o.c[i]/o.o[i],max=Math.max(...o.top[i].map(t=>t[1]),1);
+  const zbytek=o.c[i]-o.top[i].reduce((a,t)=>a+t[1],0);
+  // sparkline podílu
+  const W=280,Hh=70,mx=Math.max(...o.c.map((c,j)=>c/o.o[j]),cr)*1.08,xs=j=>4+j*(W-8)/(roky.length-1),ys=v=>Hh-14-(Hh-24)*v/mx;
+  const crline=roky.map((_,j)=>`${xs(j).toFixed(1)},${ys(D.cr.c[j]/D.cr.o[j]).toFixed(1)}`).join(' ');
+  const line=roky.map((_,j)=>`${xs(j).toFixed(1)},${ys(o.c[j]/o.o[j]).toFixed(1)}`).join(' ');
+  $('detail').innerHTML=`<h2>${esc(o.n)}</h2><div class="kraj">${esc(o.kraj)}</div>
+   <div class="velke">${pct(podil)}</div><p class="pozn">${cis(o.c[i])} cizinců z ${cis(o.o[i])} obyvatel k 31. 12. ${roky[i]} · ČR ${pct(cr)}</p>
+   <h3>Odkud jsou</h3>${o.top[i].map(([k,v])=>`<div class="radek"><span>${esc(D.staty[k]||k)}</span><div><div class="b" style="width:${(v/max*100).toFixed(1)}%"></div></div><span class="n">${cis(v)}</span></div>`).join('')}
+   ${zbytek>0?`<div class="radek"><span>ostatní státy</span><div></div><span class="n">${cis(zbytek)}</span></div>`:''}
+   <h3>Podíl cizinců ${roky[0]}–${roky[roky.length-1]}</h3>
+   <svg viewBox="0 0 ${W} ${Hh}" aria-label="Vývoj podílu cizinců"><polyline points="${crline}" fill="none" stroke="var(--mut)" stroke-dasharray="3 3"/><polyline points="${line}" fill="none" stroke="var(--acc)" stroke-width="2.2"/>
+   <circle cx="${xs(i)}" cy="${ys(podil)}" r="3.5" fill="var(--acc)"/><text x="4" y="${Hh-1}" class="osa">${roky[0]}</text><text x="${W-4}" y="${Hh-1}" class="osa" text-anchor="end">${roky[roky.length-1]}</text></svg>
+   <p class="pozn">Plná čára okres, přerušovaná celá ČR. Trvalý pobyt má ${pct(o.trv[i]/o.c[i])} cizinců, občané EU, EHP a Švýcarska tvoří ${pct(o.eu[i]/o.c[i])}.</p>`}
+ function kresli(){
+  $('posuv').value=ri;$('rokt').textContent=roky[ri];
+  $('sub').textContent=(uk==='podil'?'Podíl cizinců s povoleným pobytem na obyvatelích':'Počet cizinců s povoleným pobytem')+' · stav k 31. 12. '+roky[ri];
+  pu.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===uk));
+  cesty.forEach(p=>{const k=p.dataset.k,v=hodnota(k,ri);p.style.fill=`var(--q${trida(v)})`;p.classList.toggle('vybrany',k===vyb);p.firstChild.textContent=`${D.okresy[k].n}: ${fmt(v)}`});
+  const v=svg.querySelector('.okres.vybrany');if(v)$('vyber').innerHTML=`<path d="${v.getAttribute('d')}" fill="none" stroke="var(--sel)" stroke-width="2.4"/>`;
+  legenda();detail();
+  const u=new URL(location);u.searchParams.set('rok',roky[ri]);u.searchParams.set('okres',vyb);if(uk==='pocet')u.searchParams.set('ukazatel','pocet');else u.searchParams.delete('ukazatel');history.replaceState(null,'',u)}
+ kresli();
+}
+
+/* ================= VÝVOJ: měsíční řada od 2007 ================= */
+function vyvoj(D){
+ const M=D.mesice,n=M.length,ctl=$('ctl'),info=$('info'),obsah=$('obsah');
+ const CL=['#e0454f','#3d8fd1','#3aa66b','#e8891d','#9b5fd6','#c9a227','#2a9d9a','#d46fb0','#8c564b','#7f8c8d','#9bbd22','#1f4f9a'];
+ const barva={};D.staty.forEach((s,i)=>barva[s.kod]=CL[i%CL.length]);
+ let rezim=Q.get('rezim')==='staty'?'staty':'celkem';
+ let vybrane=(Q.get('staty')||'UKR,SVK,VNM,RUS,PHL').split(',').filter(k=>barva[k]);
+ let od=Math.max(0,M.indexOf((Q.get('od')||'2007')+'-01')),log=Q.get('osa')==='log';
+ const ZLOMY=[['2009-01','hospodářská krize','Po roce 2008 kvůli hospodářské krizi cizinců ubývalo až do konce roku 2011.'],
+  ['2011-12','změna evidence','V prosinci 2011 přibylo 30 tisíc přechodných pobytů občanů mimo EU. Skok je přímo v datech MV, jde nejspíš o změnu evidence, ne o skutečný příchod.'],
+  ['2021-01','brexit','Od roku 2021 patří občané Spojeného království mezi občany třetích zemí.'],
+  ['2022-03','válka na Ukrajině','Od března 2022 jsou v datech lidé s dočasnou ochranou z Ukrajiny, za jediný měsíc jich přibylo přes 250 tisíc.'],
+  ['2023-03','konec neprodloužených ochran','V březnu 2023 skončila dočasná ochrana lidem, kteří si ji neprodloužili (−121 tisíc za měsíc).']];
+ $('h1').textContent='Cizinci v ČR po měsících';
+ $('foot').innerHTML=ZDROJ+'. Říjen 2010 ve zdroji chybí (policie ho zveřejnila jen jako dokument Word).';
+ // ovládání
+ const sw=document.createElement('div');sw.style.display='flex';sw.style.gap='6px';
+ [['celkem','Celkem podle pobytu'],['staty','Podle států']].forEach(([k,t])=>{const b=document.createElement('button');b.textContent=t;b.dataset.k=k;b.onclick=()=>{rezim=k;kresli()};sw.appendChild(b)});
+ ctl.appendChild(sw);
+ const lab=document.createElement('label');lab.textContent='od';ctl.appendChild(lab);
+ const so=document.createElement('select');so.setAttribute('aria-label','Od roku');
+ [...new Set(M.map(m=>m.slice(0,4)))].slice(0,-1).forEach(r=>so.add(new Option(r,r)));so.value=M[od].slice(0,4);
+ so.onchange=()=>{od=M.indexOf(so.value+'-01');kresli()};ctl.appendChild(so);
+ const bl=document.createElement('button');bl.textContent='Logaritmická osa';bl.title='Na logaritmické ose je stejně velký růst o stejné procento stejně strmý, malé státy pak nezaniknou vedle Ukrajiny.';bl.onclick=()=>{log=!log;kresli()};ctl.appendChild(bl);
+ const chips=document.createElement('div');chips.className='ctl';chips.style.margin='0';chips.style.flexBasis='100%';
+ D.staty.forEach(s=>{const b=document.createElement('button');b.className='chip';b.dataset.k=s.kod;b.innerHTML=`<i style="background:${barva[s.kod]}"></i>${esc(s.n)}`;
+  b.onclick=()=>{vybrane=vybrane.includes(s.kod)?vybrane.filter(k=>k!==s.kod):[...vybrane,s.kod];kresli()};chips.appendChild(b)});
+ ctl.appendChild(chips);
+ obsah.innerHTML='<svg id="svg" role="img" aria-label="Vývoj počtu cizinců po měsících"></svg>';
+ const svg=$('svg');
+ function serie(){
+  if(rezim==='celkem')return [{n:'Trvalý pobyt',v:D.trvaly,c:'#2f7f86',pl:1},{n:'Přechodný pobyt',v:D.prechodny,c:'#8fc9c6',pl:1}];
+  return D.staty.filter(s=>vybrane.includes(s.kod)).map(s=>({n:s.n,v:s.v,c:barva[s.kod]}))}
+ function kresli(){
+  sw.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===rezim));
+  chips.style.display=bl.style.display=rezim==='staty'?'':'none';bl.setAttribute('aria-pressed',log);const lg=log&&rezim==='staty';
+  chips.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',vybrane.includes(b.dataset.k)));
+  $('sub').textContent=rezim==='celkem'?'Cizinci s povoleným pobytem podle druhu pobytu · celá ČR':'Cizinci s povoleným pobytem podle státní příslušnosti · celá ČR';
+  $('hint').textContent=rezim==='celkem'?'Jak číst: plocha ukazuje všechny cizince s povoleným pobytem, tmavá část trvalý a světlá přechodný pobyt (od 2022 včetně dočasné ochrany). Najetím na graf zobrazíte čísla za měsíc, tečky na ose vysvětlují zlomy v řadě.':'Jak číst: každá čára je jeden stát. Státy přidáte nebo odeberete tlačítky nad grafem. Najetím na graf zobrazíte čísla za měsíc.';
+  const W=Math.max(320,obsah.clientWidth||900),narrow=W<560,Hh=narrow?340:440,L=narrow?44:58,R=rezim==='staty'?(narrow?64:96):(narrow?10:16),T=34,B=28;
+  svg.setAttribute('viewBox',`0 0 ${W} ${Hh}`);
+  const S=serie(),i0=od,i1=n-1,xs=i=>L+(i-i0)*(W-L-R)/(i1-i0);
+  let mx=1;for(let i=i0;i<=i1;i++){const v=rezim==='celkem'?(D.celkem[i]||0):Math.max(0,...S.map(s=>s.v[i]||0));if(v>mx)mx=v}
+  let s='',ys;
+  if(lg){let mn=mx;for(let i=i0;i<=i1;i++)S.forEach(se=>{if(se.v[i]>0&&se.v[i]<mn)mn=se.v[i]});
+   const a=Math.log10(Math.max(1,mn)*0.85),b=Math.log10(mx*1.15);ys=v=>Hh-B-(Hh-B-T)*(Math.log10(Math.max(v,1))-a)/(b-a);
+   for(let e=Math.floor(a);e<=Math.ceil(b);e++)[1,2,5].forEach(m=>{const v=m*10**e,l=Math.log10(v);if(l>=a&&l<=b)s+=`<line class="mrizka" x1="${L}" x2="${W-R}" y1="${ys(v)}" y2="${ys(v)}"/><text class="osa" x="${L-6}" y="${ys(v)+4}" text-anchor="end">${kratce(v)}</text>`})}
+  else{const krok=nice(mx/5),top=Math.ceil(mx*1.04/krok)*krok;ys=v=>Hh-B-(Hh-B-T)*v/top;
+   for(let v=0;v<=top+1e-9;v+=krok)s+=`<line class="mrizka" x1="${L}" x2="${W-R}" y1="${ys(v)}" y2="${ys(v)}"/><text class="osa" x="${L-6}" y="${ys(v)+4}" text-anchor="end">${v?kratce(v):'0'}</text>`}
+  const rk=(i1-i0)/12>14?(narrow?4:2):(narrow?2:1);
+  for(let i=i0;i<=i1;i++)if(M[i].endsWith('-01')&&(+M[i].slice(0,4))%rk===0)s+=`<text class="osa" x="${xs(i)}" y="${Hh-8}" text-anchor="middle">${narrow?"'"+M[i].slice(2,4):M[i].slice(0,4)}</text>`;
+  D.chybi.forEach(m=>{const i=M.indexOf(m);if(i>=i0)s+=`<rect class="mezera" x="${xs(i-1)}" y="${T}" width="${xs(i+1)-xs(i-1)}" height="${Hh-B-T}"><title>${mesic(m)}: údaj chybí</title></rect>`});
+  // čáry / plochy, mezery (null) přeruší čáru
+  const usek=(v,f)=>{const part=[];let cur=[];for(let i=i0;i<=i1;i++){if(v[i]==null){if(cur.length)part.push(cur);cur=[]}else cur.push(f(i))}if(cur.length)part.push(cur);return part};
+  if(rezim==='celkem'){
+   const dol=D.trvaly,cel=D.celkem;
+   usek(cel,i=>i).forEach(idx=>{
+    s+=`<path d="M${idx.map(i=>`${xs(i).toFixed(1)},${ys(dol[i]).toFixed(1)}`).join('L')}L${idx.slice().reverse().map(i=>`${xs(i).toFixed(1)},${ys(0).toFixed(1)}`).join('L')}Z" fill="#2f7f86"/>`;
+    s+=`<path d="M${idx.map(i=>`${xs(i).toFixed(1)},${ys(cel[i]).toFixed(1)}`).join('L')}L${idx.slice().reverse().map(i=>`${xs(i).toFixed(1)},${ys(dol[i]).toFixed(1)}`).join('L')}Z" fill="#8fc9c6"/>`;
+    s+=`<polyline points="${idx.map(i=>`${xs(i).toFixed(1)},${ys(cel[i]).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--fg)" stroke-width="1.4"/>`});
+   const lx=xs(i1)-6;s+=`<text x="${lx}" y="${ys(dol[i1]/2)+4}" text-anchor="end" font-size="13" fill="#fff" font-weight="600">trvalý</text><text x="${lx}" y="${ys((dol[i1]+cel[i1])/2)+4}" text-anchor="end" font-size="13" fill="#123" font-weight="600">přechodný</text>`;
+  }else{S.forEach(se=>usek(se.v,i=>`${xs(i).toFixed(1)},${ys(se.v[i]).toFixed(1)}`).forEach(p=>{s+=`<polyline points="${p.join(' ')}" fill="none" stroke="${se.c}" stroke-width="2.2" stroke-linejoin="round"/>`}));
+   // popisky na konci čar, rozestrčené, aby se nepřekrývaly
+   const pop=S.map(se=>({n:se.n,c:se.c,y:ys(se.v[i1]||0)})).sort((a,b)=>a.y-b.y);
+   for(let k=1;k<pop.length;k++)if(pop[k].y-pop[k-1].y<14)pop[k].y=pop[k-1].y+14;
+   pop.forEach(p=>{s+=`<text x="${W-R+6}" y="${p.y+4}" font-size="12.5" font-weight="600" fill="${p.c}">${esc(p.n)}</text>`})}
+  // zlomy
+  ZLOMY.forEach(([m,t,popis],k)=>{const i=M.indexOf(m);if(i<i0)return;const x=xs(i);
+   s+=`<g class="zlom" data-k="${k}" style="cursor:help"><line x1="${x}" x2="${x}" y1="${T-6}" y2="${Hh-B}"/><circle cx="${x}" cy="${T-12}" r="8"/><text x="${x}" y="${T-8}" text-anchor="middle" font-weight="700">${k+1}</text><title>${esc(t)}: ${esc(popis)}</title></g>`});
+  s+=`<line id="kurzor" class="kurzor" y1="${T}" y2="${Hh-B}" visibility="hidden"/><rect id="plocha" x="${L}" y="${T}" width="${W-L-R}" height="${Hh-B-T}" fill="transparent"/>`;
+  svg.innerHTML=s;
+  // legenda zlomů pod grafem do nápovědy
+  $('hint').innerHTML=esc($('hint').textContent)+'<br>'+ZLOMY.filter(z=>M.indexOf(z[0])>=i0).map(z=>`<b>${ZLOMY.indexOf(z)+1}</b> ${esc(mesic(z[0]))}: ${esc(z[2])}`).join('<br>');
+  const pl=$('plocha'),ku=$('kurzor');
+  const ukaz=e=>{const b=svg.getBoundingClientRect(),x=(e.clientX-b.left)*W/b.width;let i=Math.round(i0+(x-L)*(i1-i0)/(W-L-R));i=Math.max(i0,Math.min(i1,i));
+   ku.setAttribute('x1',xs(i));ku.setAttribute('x2',xs(i));ku.setAttribute('visibility','visible');
+   if(D.celkem[i]==null){info.textContent=`${mesic(M[i])}: údaj chybí`;return}
+   info.textContent=rezim==='celkem'?`${mesic(M[i])}: ${cis(D.celkem[i])} cizinců, z toho trvalý pobyt ${cis(D.trvaly[i])}, přechodný ${cis(D.prechodny[i])}${D.docasna[i]?` (dočasná ochrana ${cis(D.docasna[i])})`:''}`
+    :`${mesic(M[i])}: `+S.map(se=>`${se.n} ${cis(se.v[i]||0)}`).join(' · ')};
+  pl.onpointermove=ukaz;pl.onpointerdown=ukaz;pl.onpointerleave=()=>{ku.setAttribute('visibility','hidden');info.innerHTML='&nbsp;'};
+  const u=new URL(location);u.searchParams.set('graf','vyvoj');if(rezim==='staty'){u.searchParams.set('rezim','staty');u.searchParams.set('staty',vybrane.join(','))}else{u.searchParams.delete('rezim');u.searchParams.delete('staty')}
+  if(i0>0)u.searchParams.set('od',M[i0].slice(0,4));else u.searchParams.delete('od');
+  if(lg)u.searchParams.set('osa','log');else u.searchParams.delete('osa');history.replaceState(null,'',u);
+ }
+ kresli();let t;addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(kresli,150)});
+}
+</script></body></html>

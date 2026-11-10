@@ -1,0 +1,5 @@
+# generuje scripts/build_data.py při nasazení
+cizinci/*.json
+_site/
+__pycache__/
+*.pyc

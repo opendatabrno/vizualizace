@@ -1,0 +1,4 @@
+# Jednotné konce řádků (LF) na Windows i na runnerech GitHub Actions
+* text=auto eol=lf
+*.xlsx binary
+*.xls binary
