@@ -53,6 +53,7 @@ k vložení jako iframe. Starší adresy `obyvatele/?graf=…` a `cizinci/?graf=
 | `obyvatele/graf.html?graf=mapa` | mapa všech obcí: změna obyvatel, změna občanů ČR, podíl cizinců |
 | `obyvatele/graf.html?graf=mesto&mesto=582786` | totéž za městské části 8 statutárních měst |
 | `obyvatele/graf.html?graf=obec&obec=582786` | sloupcový graf jedné obce po letech |
+| `obyvatele/graf.html?graf=zaci` | mapa obcí: změna žáků ZŠ a dětí v MŠ, děti a žáci na 1 000 obyvatel, Kč ze sdílených daní na obyvatele |
 
 ### Parametry v adrese
 
@@ -69,6 +70,7 @@ k vložení jako iframe. Starší adresy `obyvatele/?graf=…` a `cizinci/?graf=
 | `od=2015` | vývoj | začátek osy |
 | `osa=log` | vývoj | logaritmická osa (jen podle států) |
 | `ukazatel=obcane`, `ukazatel=cizinci` | obce, města | změna občanů ČR / podíl cizinců místo změny obyvatel |
+| `ukazatel=ms`, `ukazatel=na1000`, `ukazatel=kc` | žáci | změna dětí v MŠ / na 1 000 obyvatel / Kč na obyvatele místo změny žáků ZŠ |
 | `od=2005`, `do=2026` | obce, města | roky, mezi kterými se počítá změna (výchozí od 2005, data od 2004) |
 | `kraj=CZ064` | obce | přiblíží kraj (kód NUTS) |
 | `obec=582786` | obce, obec | vybraná obec (kód ČSÚ) |

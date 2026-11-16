@@ -31,6 +31,10 @@ a{color:var(--acc)}
 <p>Data: <a href="https://github.com/opendatabrno/obyvatele">opendatabrno/obyvatele</a> (informativní počty obyvatel MV ČR k 1. 1.).</p>
 <div class="grid" id="grid2"></div>
 
+<h2>Žáci ve školách obcí</h2>
+<p>Data: <a href="https://github.com/opendatabrno/zaci">opendatabrno/zaci</a> (MF ČR z výkazů MŠMT, stav k 30. 9.).</p>
+<div class="grid" id="grid3"></div>
+
 <h2>Parametry</h2>
 <p>Do adresy grafu lze přidat parametry, např. <code>cizinci/graf.html?graf=mapa&amp;okres=CZ0642&amp;nadpis=0</code>.</p>
 <table class="param">
@@ -42,6 +46,7 @@ a{color:var(--acc)}
 <tr><td><code>obyvatele/graf.html?graf=mapa</code></td><td>mapa obcí; dál <code>ukazatel=obcane</code> / <code>cizinci</code>, <code>od=2005</code>, <code>do=2026</code>, <code>kraj=CZ064</code> (přiblížení), <code>obec=582786</code> (kód obce)</td></tr>
 <tr><td><code>obyvatele/graf.html?graf=mesto</code></td><td>městské části; dál <code>mesto=582786</code> (kód obce), <code>mc=550973</code> (kód části) a stejné <code>ukazatel</code>, <code>od</code>, <code>do</code></td></tr>
 <tr><td><code>obyvatele/graf.html?graf=obec</code></td><td>jedna obec; <code>obec=582786</code></td></tr>
+<tr><td><code>obyvatele/graf.html?graf=zaci</code></td><td>mapa žáků ve školách obcí; dál <code>ukazatel=ms</code> / <code>na1000</code> / <code>kc</code>, <code>od=2014</code>, <code>do=2024</code>, <code>kraj</code>, <code>obec</code> jako u mapy obcí</td></tr>
 </table>
 </main>
 <script>
@@ -52,6 +57,8 @@ const GRAFY2=[
  ['obyvatele/graf.html?graf=mapa','Obyvatelé obcí','Mapa všech obcí ČR: kde od roku 2005 obyvatel přibylo a kde ubylo, změna občanů ČR bez cizinců a podíl cizinců. Kraj lze přiblížit, obec vyhledat.',720],
  ['obyvatele/graf.html?graf=mesto&mesto=582786','Městské části','Totéž za městské části a obvody osmi statutárních měst (Praha, Brno, Ostrava, Plzeň, Pardubice, Opava, Liberec, Ústí nad Labem) s pořadím částí.',900],
  ['obyvatele/graf.html?graf=obec&obec=582786','Jedna obec','Vývoj počtu obyvatel jedné obce po letech, občané a cizinci. Hodí se k vložení na web obce (parametr obec = kód obce ČSÚ).',520]];
+const GRAFY3=[
+ ['obyvatele/graf.html?graf=zaci','Žáci ve školách obcí','Mapa obcí: změna počtu žáků v základních a dětí v mateřských školách, které obec zřizuje, děti a žáci na 1 000 obyvatel a peníze ze sdílených daní na obyvatele.',720]];
 const base=new URL('../',location.href).href;
 const karty=(seznam,od)=>seznam.map(([u,t,p,h],j)=>{const i=od+j;
  const kod=`<iframe src="${base}${u.replace(/&/g,'&amp;')}" width="100%" height="${h}" style="border:0" loading="lazy" title="${t}"></iframe>`;
@@ -59,6 +66,7 @@ const karty=(seznam,od)=>seznam.map(([u,t,p,h],j)=>{const i=od+j;
  <div class="kod"><input readonly value="${kod.replace(/"/g,'&quot;')}" aria-label="Kód pro vložení: ${t}" id="k${i}"><button data-i="${i}">Kopírovat</button></div></div></div>`}).join('');
 document.getElementById('grid').innerHTML=karty(GRAFY,0);
 document.getElementById('grid2').innerHTML=karty(GRAFY2,GRAFY.length);
+document.getElementById('grid3').innerHTML=karty(GRAFY3,GRAFY.length+GRAFY2.length);
 document.querySelectorAll('.kod button').forEach(b=>b.onclick=()=>{const v=document.getElementById('k'+b.dataset.i);
  (navigator.clipboard?navigator.clipboard.writeText(v.value):Promise.reject()).then(()=>{b.textContent='Zkopírováno'},()=>{v.select();document.execCommand('copy');b.textContent='Zkopírováno'});
  setTimeout(()=>b.textContent='Kopírovat',1800)});
