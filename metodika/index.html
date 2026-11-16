@@ -40,14 +40,14 @@ dl.pojmy dt{font-weight:700;margin-top:12px}dl.pojmy dd{margin:2px 0 0;color:var
           <dt>Občané ČR</dt><dd>Lidé s českým občanstvím a trvalým pobytem v obci. Patří sem i lidé, kteří v obci nežijí (trvalý pobyt na adrese úřadu, žijící v zahraničí).</dd>
           <dt>Cizinci s povoleným pobytem</dt><dd>Cizinci s trvalým pobytem nebo s přechodným pobytem nad 90 dní (u občanů EU přechodný pobyt, u ostatních dlouhodobé vízum a pobyt). Od roku 2022 včetně dočasné ochrany.</dd>
           <dt>Dočasná ochrana</dt><dd>Pobytové oprávnění pro lidi prchající před válkou na Ukrajině (od března 2022). V sadě obyvatel je od roku 2023 jako samostatný sloupec, je součástí přechodného pobytu.</dd>
-          <dt>Počet obyvatel ČSÚ</dt><dd>Oficiální počet obyvatel podle Sčítání 2021 a bilance narozených, zemřelých a stěhování. Zveřejňuje se v květnu za předchozí 1. 1.</dd>
+          <dt>Počet obyvatel ČSÚ</dt><dd>Oficiální počet obyvatel. Přesně změřený je jen ke dni sčítání (naposledy 26. 3. 2021, další 2031), v ostatních letech ho ČSÚ dopočítává ze sčítání a bilance narozených, zemřelých a stěhování. Stěhování přebírá ze změn trvalého pobytu, takže s odstupem od sčítání se může od skutečnosti vzdalovat. Zveřejňuje se v květnu za předchozí 1. 1.</dd>
           <dt>Odhad ČSÚ (<code>odhad_csu</code>)</dt><dd>Než ČSÚ data zveřejní, odhadujeme jeho počet z dat MV koeficientem obce z posledního známého roku. Mimo roky se zlomem se od pozdějšího čísla ČSÚ liší v mediánu o 0,04–0,07 %.</dd>
           <dt>Podíl občanů, kteří v obci žijí (<code>koef_obcane</code>)</dt><dd>U městských částí podle Sčítání 2021: kolik občanů z registru v části opravdu bydlí. Pod 1 = víc registrovaných než bydlících (např. Brno-střed 0,74).</dd>
         </dl></section>
 
       <section id="ktere-cislo"><h2>Které číslo použít</h2>
         <div class="strom">
-          <div style="--barva:var(--csu)"><b>Přepočet na obyvatele, hustota, srovnání s jinými statistikami</b>Oficiální počet ČSÚ (<code>obyvatele_csu</code>), pro nejnovější rok <code>odhad_csu</code>.</div>
+          <div style="--barva:var(--csu)"><b>Přepočet na obyvatele, hustota, srovnání s jinými statistikami</b>Oficiální počet ČSÚ (<code>obyvatele_csu</code>), pro nejnovější rok <code>odhad_csu</code>. Je to standard, se kterým počítají ostatní statistiky, ne „pravda“: přesný je jen v roce sčítání.</div>
           <div style="--barva:var(--obc)"><b>Občané a cizinci, muži a ženy, městské části, nejčerstvější stav</b>Data MV (<code>obyvatele_celkem</code>, <code>obcane_*</code>, <code>cizinci_*</code>). Počítejte s tím, že jsou vyšší než ČSÚ, ve velkých městech až o 10 %.</div>
           <div style="--barva:var(--ciz)"><b>Odkud cizinci jsou</b>Sada cizinců s povoleným pobytem, jen po okresech a za ČR.</div>
           <div style="--barva:var(--fg)"><b>Vývoj v čase přes roky 2022/2023</b>Občané ČR (bez vlivu dočasné ochrany), nebo obyvatelé bez dočasné ochrany. Přes rok 2021 pozor na přepočet ČSÚ podle sčítání.</div>

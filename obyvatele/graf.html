@@ -37,6 +37,17 @@ footer{margin-top:10px;color:var(--mut);font-size:12.5px}footer a{color:inherit}
 .u{stroke:none;cursor:pointer}.jemne .u{stroke:var(--hr);stroke-width:.5px;vector-effect:non-scaling-stroke}
 .u:hover{stroke:var(--fg);stroke-width:1.5px;vector-effect:non-scaling-stroke}
 .cara{fill:none;pointer-events:none;vector-effect:non-scaling-stroke}
+.mapobal{position:relative;touch-action:pan-x pan-y;user-select:none;-webkit-user-select:none}
+.mapobal.priblizeno{touch-action:none}.mapobal svg{cursor:grab}.mapobal.tahne svg{cursor:grabbing}
+.zoomtl{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:4px;z-index:2}
+.zoomtl button{width:34px;height:34px;font:600 19px/1 inherit;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--fg);cursor:pointer;padding:0}
+.zoomtl button:hover{background:var(--soft)}
+.zoomhint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.72);color:#fff;padding:10px 16px;border-radius:6px;font-size:15px;pointer-events:none;opacity:0;transition:opacity .25s;text-align:center}
+.zoomhint.on{opacity:1}
+.pop text{pointer-events:none;fill:var(--fg);paint-order:stroke;stroke:var(--bg);stroke-linejoin:round;font-weight:600}
+.pop text.vel{font-weight:700}.pop text.vyb{fill:var(--sel)}
+.pop circle{fill:var(--fg);stroke:var(--bg);pointer-events:none}
+.mtip{position:fixed;pointer-events:none;background:var(--fg);color:var(--bg);padding:6px 9px;border-radius:4px;font-size:13.5px;z-index:50;max-width:260px;line-height:1.35;display:none}
 .leg{display:flex;flex-wrap:wrap;margin:8px 0 0;font-size:12px;color:var(--mut)}
 .leg span{flex:1;min-width:38px;text-align:center}.leg span i{display:block;height:10px;margin-bottom:3px}
 .detail h2{margin:0 0 2px;font-size:22px;line-height:1.15}.detail .kraj{color:var(--mut);font-size:13.5px;text-transform:uppercase}
@@ -126,18 +137,72 @@ function mapa(D,H){
  const sk=vyber(ctl,'',[['','Celá ČR'],...Object.keys(H.ramecky).map(k=>[k,D.kraje[k]||k])],kraj,v=>{kraj=v;zoom();kresli()});
  const hl=document.createElement('input');hl.type='search';hl.placeholder='Najít obec…';hl.setAttribute('list','seznam');hl.setAttribute('aria-label','Najít obec');ctl.appendChild(hl);
  const jmena={};$('seznam').innerHTML=Object.entries(D.obce).map(([k,r])=>{const t=`${r[0]} (${D.okresy[r[1]]||'—'})`;jmena[t]=k;return `<option value="${esc(t)}">`}).join('');
- hl.onchange=()=>{const k=jmena[hl.value];if(k){vyb=k;kraj=D.obce[k][1].slice(0,5);if(!H.ramecky[kraj])kraj='';sk.value=kraj;zoom();kresli();hl.value='';hl.blur()}};
- $('obsah').innerHTML=`<div class="mapa"><div><svg id="svg" viewBox="${H.viewBox}" role="img" aria-label="Mapa obcí ČR"></svg><div class="leg" id="leg"></div></div><div class="detail" id="detail"></div></div>`;
+ hl.onchange=()=>{const k=jmena[hl.value];if(k){vyb=k;kraj=D.obce[k][1].slice(0,5);if(!H.ramecky[kraj])kraj='';sk.value=kraj;kresli();naObec(k);hl.value='';hl.blur()}};
+ $('obsah').innerHTML=`<div class="mapa"><div><div class="mapobal" id="mapobal"><svg id="svg" viewBox="${H.viewBox}" role="img" aria-label="Mapa obcí ČR"></svg>
+  <div class="zoomtl"><button id="zplus" title="Přiblížit" aria-label="Přiblížit">+</button><button id="zminus" title="Oddálit" aria-label="Oddálit">−</button><button id="zcela" title="Celá ČR" aria-label="Celá ČR" style="font-size:13px">ČR</button></div>
+  <div class="zoomhint" id="zoomhint">Mapu přiblížíte kolečkem s klávesou Ctrl,<br>tlačítkem + nebo dvojklikem</div></div>
+  <div class="leg" id="leg"></div></div><div class="detail" id="detail"></div></div>`;
  const svg=$('svg');let s='<g id="u">';
  for(const [k,d] of Object.entries(H.obce))if(D.obce[k])s+=`<path class="u" data-k="${k}" d="${d}"/>`;
- s+=`</g><path class="cara" d="${H.okresy}" stroke="var(--okr)" stroke-width=".6"/><path class="cara" d="${H.kraje}" stroke="var(--kr)" stroke-width="1.2"/><path class="cara" d="${H.stat}" stroke="var(--kr)" stroke-width="1.6"/><g id="vyb"></g>`;
+ s+=`</g><path class="cara" d="${H.okresy}" stroke="var(--okr)" stroke-width=".6"/><path class="cara" d="${H.kraje}" stroke="var(--kr)" stroke-width="1.2"/><path class="cara" d="${H.stat}" stroke="var(--kr)" stroke-width="1.6"/><g id="vyb"></g><g class="pop" id="pop"></g>`;
  svg.innerHTML=s;
  const cesty=[...svg.querySelectorAll('.u')];
- svg.addEventListener('mouseover',e=>{const k=e.target.dataset&&e.target.dataset.k;if(!k)return;const r=D.obce[k];$('info').textContent=`${r[0]} (${D.okresy[r[1]]||''}): ${pct(hodnota(uk,r,a,b),uk!=='cizinci')} · ${cis(r[2][b])} obyvatel`});
- svg.addEventListener('mouseleave',()=>{$('info').innerHTML='&nbsp;'});
- svg.addEventListener('click',e=>{const k=e.target.dataset&&e.target.dataset.k;if(k){vyb=k;kresli()}});
- function zoom(){const [x,y,w,h]=kraj?H.ramecky[kraj]:H.viewBox.split(' ').map(Number),p=kraj?Math.max(w,h)*0.04:0;
-  svg.setAttribute('viewBox',`${x-p} ${y-p} ${w+2*p} ${h+2*p}`);svg.classList.toggle('jemne',!!kraj)}
+ /* ---- přiblížení, posun, popisky obcí, bublina ---- */
+ const VB0=H.viewBox.split(' ').map(Number),pomer=VB0[3]/VB0[2],obal=$('mapobal');let vb=[...VB0],stredy=null,anim=0,cil=null;
+ const mtip=document.createElement('div');mtip.className='mtip';document.body.appendChild(mtip);
+ const bod=(cx,cy)=>{const m=svg.getScreenCTM().inverse(),pt=svg.createSVGPoint();pt.x=cx;pt.y=cy;return pt.matrixTransform(m)};
+ function omez(v){let [x,y,w,h]=v;const mn=VB0[2]/80;if(w>VB0[2]){h=h*VB0[2]/w;w=VB0[2]}if(w<mn){h=h*mn/w;w=mn}
+  x=Math.min(Math.max(x,VB0[0]-w*.3),VB0[0]+VB0[2]-w*.7);y=Math.min(Math.max(y,VB0[1]-h*.3),VB0[1]+VB0[3]-h*.7);return [x,y,w,h]}
+ function nastav(v,plynule){v=omez(v);cancelAnimationFrame(anim);
+  if(!plynule||matchMedia('(prefers-reduced-motion: reduce)').matches){cil=null;vb=v;pouzij();return}cil=v;
+  const z=[...vb],t0=performance.now(),krok=t=>{const q=Math.min(1,(t-t0)/350),e=q<.5?2*q*q:1-Math.pow(-2*q+2,2)/2;vb=z.map((x,i)=>x+(v[i]-x)*e);pouzij(q<1);if(q<1)anim=requestAnimationFrame(krok);else cil=null};anim=requestAnimationFrame(krok)}
+ function pouzij(behem){svg.setAttribute('viewBox',vb.join(' '));const zz=VB0[2]/vb[2];svg.classList.toggle('jemne',zz>2.5);obal.classList.toggle('priblizeno',zz>1.05);if(!behem)popisky()}
+ function priblizV(f,cx,cy,plynule){const rr=svg.getBoundingClientRect();if(cx==null){cx=rr.left+rr.width/2;cy=rr.top+rr.height/2}
+  const p=bod(cx,cy),z=cil||vb;if(cil){p.x=z[0]+z[2]/2;p.y=z[1]+z[3]/2}nastav([p.x-(p.x-z[0])/f,p.y-(p.y-z[1])/f,z[2]/f,z[3]/f],plynule)}
+ function napln(){stredy={};for(const c of cesty){const bb=c.getBBox();stredy[c.dataset.k]=[bb.x+bb.width/2,bb.y+bb.height/2,Math.max(bb.width,bb.height)]}}
+ function popisky(){
+  if(!stredy)napln();
+  const zz=VB0[2]/vb[2],px=svg.getBoundingClientRect().width||800,j=vb[2]/px; // jednotek SVG na pixel
+  const prah=60000/Math.pow(zz,1.7);
+  const kand=Object.keys(D.obce).filter(k=>{const st=stredy[k];if(!st)return false;const o=D.obce[k][2][b]||0;
+   return (o>=prah||k===vyb)&&st[0]>vb[0]&&st[0]<vb[0]+vb[2]&&st[1]>vb[1]&&st[1]<vb[1]+vb[3]})
+   .sort((x,y)=>(y===vyb)-(x===vyb)||(D.obce[y][2][b]||0)-(D.obce[x][2][b]||0));
+  const obs=[],out=[];
+  for(const k of kand){if(out.length>=90)break;const r=D.obce[k],o=r[2][b]||0,vel=o>=50000,fs=vel?14:o>=10000?12.5:11.5,[x,y]=stredy[k];
+   const w=r[0].length*fs*.56*j,h=fs*1.2*j,bx=[x-w/2,y-h-5*j,x+w/2,y+3*j];
+   if(k!==vyb&&obs.some(q=>bx[0]<q[2]&&bx[2]>q[0]&&bx[1]<q[3]&&bx[3]>q[1]))continue;obs.push(bx);
+   out.push(`<circle cx="${x}" cy="${y}" r="${2.2*j}" stroke-width="${j}"/><text x="${x}" y="${y-5*j}" text-anchor="middle" font-size="${fs*j}" stroke-width="${3*j}" class="${vel?'vel':''}${k===vyb?' vyb':''}">${esc(r[0])}</text>`)}
+  $('pop').innerHTML=out.join('')}
+ // kolečko s Ctrl/⌘ přibližuje, bez něj se stránka normálně posouvá a ukáže se nápověda
+ let hintT;svg.addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey){e.preventDefault();priblizV(Math.exp(-e.deltaY*.0025),e.clientX,e.clientY)}
+  else{$('zoomhint').classList.add('on');clearTimeout(hintT);hintT=setTimeout(()=>$('zoomhint').classList.remove('on'),1300)}},{passive:false});
+ svg.addEventListener('dblclick',e=>{e.preventDefault();priblizV(e.shiftKey?.5:2.2,e.clientX,e.clientY,true)});
+ $('zplus').onclick=()=>priblizV(2,null,null,true);$('zminus').onclick=()=>priblizV(.5,null,null,true);
+ $('zcela').onclick=()=>{kraj='';sk.value='';nastav([...VB0],true);kresli()};
+ // tažení myší / prstem (prstem jen v přiblížené mapě), sevření dvěma prsty
+ const ptr=new Map();let tah=null,posunuto=false;
+ const celaMapa=()=>VB0[2]/vb[2]<=1.05;
+ svg.addEventListener('pointerdown',e=>{ptr.set(e.pointerId,[e.clientX,e.clientY]);posunuto=false;
+  if(ptr.size===1){if(e.pointerType==='touch'&&celaMapa())return;tah={vb:[...vb],p:[e.clientX,e.clientY]};svg.setPointerCapture(e.pointerId)}});
+ svg.addEventListener('pointermove',e=>{
+  if(!ptr.has(e.pointerId)){ukaz(e);return}ptr.set(e.pointerId,[e.clientX,e.clientY]);
+  if(ptr.size===2){const [p1,p2]=[...ptr.values()],d=Math.hypot(p1[0]-p2[0],p1[1]-p2[1]);
+   if(!tah||!tah.d){tah={vb:[...vb],d,c:[(p1[0]+p2[0])/2,(p1[1]+p2[1])/2]};return}
+   e.preventDefault();posunuto=true;vb=[...tah.vb];priblizV(d/tah.d,tah.c[0],tah.c[1]);return}
+  if(!tah||tah.d)return;const dx=e.clientX-tah.p[0],dy=e.clientY-tah.p[1];if(!posunuto&&Math.hypot(dx,dy)<5)return;
+  posunuto=true;obal.classList.add('tahne');mtip.style.display='none';const sx=tah.vb[2]/svg.getBoundingClientRect().width;
+  vb=omez([tah.vb[0]-dx*sx,tah.vb[1]-dy*sx,tah.vb[2],tah.vb[3]]);pouzij(true)});
+ const konec=e=>{ptr.delete(e.pointerId);if(tah&&tah.d&&ptr.size<2)tah=null;if(!ptr.size){if(posunuto)popisky();obal.classList.remove('tahne');tah=null}};
+ svg.addEventListener('pointerup',konec);svg.addEventListener('pointercancel',konec);
+ function ukaz(e){const k=e.target.dataset&&e.target.dataset.k;if(!k||e.pointerType==='touch'){mtip.style.display='none';return}const r=D.obce[k];
+  mtip.innerHTML=`<b>${esc(r[0])}</b> · okres ${esc(D.okresy[r[1]]||'')}<br>${pct(hodnota(uk,r,a,b),uk!=='cizinci')} · ${cis(r[2][b])} obyvatel`;mtip.style.display='block';
+  const w=mtip.offsetWidth,h=mtip.offsetHeight;mtip.style.left=Math.min(e.clientX+14,innerWidth-w-8)+'px';mtip.style.top=(e.clientY+h+22>innerHeight?e.clientY-h-12:e.clientY+16)+'px'}
+ svg.addEventListener('pointerleave',()=>{mtip.style.display='none'});
+ svg.addEventListener('click',e=>{if(posunuto){posunuto=false;return}const k=e.target.dataset&&e.target.dataset.k;if(k){vyb=k;kresli()}});
+ addEventListener('resize',()=>popisky());
+ function zoom(){if(!kraj){nastav([...VB0],true);return}const [x,y,w,h]=H.ramecky[kraj],p=Math.max(w,h)*0.04;
+  let W=w+2*p,Hh=h+2*p;if(Hh/W>pomer)W=Hh/pomer;else Hh=W*pomer;nastav([x+w/2-W/2,y+h/2-Hh/2,W,Hh],true)}
+ function naObec(k){if(!stredy)napln();const st=stredy[k];if(!st)return zoom();const W=Math.max(st[2]*14,VB0[2]/22);nastav([st[0]-W/2,st[1]-W*pomer/2,W,W*pomer],true)}
  function detail(){
   const r=D.obce[vyb],o=r[2],c=r[3],v=hodnota(uk,r,a,b),cr=[D.cr[0],D.cr[1]];const crr=['',r[1],cr[0],cr[1]];
   $('detail').innerHTML=`<h2>${esc(r[0])}</h2><div class="kraj">okres ${esc(D.okresy[r[1]]||'—')}</div>
@@ -153,9 +218,9 @@ function mapa(D,H){
   for(const p of cesty)p.style.fill=barva(uk,hodnota(uk,D.obce[p.dataset.k],a,b));
   const sel=svg.querySelector(`.u[data-k="${vyb}"]`);
   $('vyb').innerHTML=sel?`<path class="cara" d="${sel.getAttribute('d')}" stroke="var(--sel)" stroke-width="2.4"/>`:'';
-  legenda($('leg'),uk);detail();
+  legenda($('leg'),uk);detail();if(stredy)popisky();
   nastavUrl({ukazatel:uk==='zmena'?null:uk,od:uk==='cizinci'||a===0?null:roky[a],do:b===N-1?null:roky[b],kraj:kraj||null,obec:vyb})}
- zoom();kresli();
+ kresli();if(kraj)zoom();else requestAnimationFrame(()=>popisky());
 }
 
 /* ================= MĚSTSKÉ ČÁSTI ================= */
