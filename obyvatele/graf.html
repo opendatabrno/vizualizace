@@ -183,14 +183,14 @@ function mapa(D,H){
  const ptr=new Map();let tah=null,posunuto=false;
  const celaMapa=()=>VB0[2]/vb[2]<=1.05;
  svg.addEventListener('pointerdown',e=>{ptr.set(e.pointerId,[e.clientX,e.clientY]);posunuto=false;
-  if(ptr.size===1){if(e.pointerType==='touch'&&celaMapa())return;tah={vb:[...vb],p:[e.clientX,e.clientY]};svg.setPointerCapture(e.pointerId)}});
+  if(ptr.size===1){if(e.pointerType==='touch'&&celaMapa())return;tah={vb:[...vb],p:[e.clientX,e.clientY],id:e.pointerId}}});
  svg.addEventListener('pointermove',e=>{
   if(!ptr.has(e.pointerId)){ukaz(e);return}ptr.set(e.pointerId,[e.clientX,e.clientY]);
   if(ptr.size===2){const [p1,p2]=[...ptr.values()],d=Math.hypot(p1[0]-p2[0],p1[1]-p2[1]);
    if(!tah||!tah.d){tah={vb:[...vb],d,c:[(p1[0]+p2[0])/2,(p1[1]+p2[1])/2]};return}
    e.preventDefault();posunuto=true;vb=[...tah.vb];priblizV(d/tah.d,tah.c[0],tah.c[1]);return}
   if(!tah||tah.d)return;const dx=e.clientX-tah.p[0],dy=e.clientY-tah.p[1];if(!posunuto&&Math.hypot(dx,dy)<5)return;
-  posunuto=true;obal.classList.add('tahne');mtip.style.display='none';const sx=tah.vb[2]/svg.getBoundingClientRect().width;
+  if(!posunuto)try{svg.setPointerCapture(tah.id)}catch(_){}posunuto=true;obal.classList.add('tahne');mtip.style.display='none';const sx=tah.vb[2]/svg.getBoundingClientRect().width;
   vb=omez([tah.vb[0]-dx*sx,tah.vb[1]-dy*sx,tah.vb[2],tah.vb[3]]);pouzij(true)});
  const konec=e=>{ptr.delete(e.pointerId);if(tah&&tah.d&&ptr.size<2)tah=null;if(!ptr.size){if(posunuto)popisky();obal.classList.remove('tahne');tah=null}};
  svg.addEventListener('pointerup',konec);svg.addEventListener('pointercancel',konec);
