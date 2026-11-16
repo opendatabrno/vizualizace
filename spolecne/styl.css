@@ -1,12 +1,12 @@
 /* Společný vzhled stránek webu (rozcestník, moduly, profil obce, metodika).
    Grafy k vložení (obyvatele/graf.html, cizinci/graf.html) mají vlastní styl, aby fungovaly samostatně v iframe. */
 :root{--bg:#fff;--fg:#1c1c1c;--mut:#5a5a5a;--soft:#f3f3f3;--soft2:#e9eded;--line:#d6d6d6;--grid:#ececec;
- --acc:#2f7f86;--acc2:#1d6870;--obc:#2f7f86;--ciz:#e8891d;--do:#c2410c;--csu:#6d3fb0;--zak:#3866b0;--plus:#2b8c88;--minus:#c6501a;
+ --acc:#2f7f86;--acc2:#1d6870;--obc:#2f7f86;--ciz:#e8891d;--do:#c2410c;--csu:#6d3fb0;--zak:#3866b0;--sub:#5b7f1f;--plus:#2b8c88;--minus:#c6501a;
  --stin:0 1px 2px rgba(0,0,0,.06),0 6px 20px rgba(0,0,0,.05);color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-tema="svetle"]){--bg:#141718;--fg:#e9ecec;--mut:#a7b0b1;--soft:#1f2425;--soft2:#262c2d;--line:#384042;--grid:#262c2d;
- --acc:#6cc3c4;--acc2:#8fd6d4;--obc:#56ada9;--ciz:#f0a04b;--do:#f08a4b;--csu:#b493e8;--zak:#7ea6e8;--plus:#56ada9;--minus:#f08a4b;--stin:none;color-scheme:dark}}
+ --acc:#6cc3c4;--acc2:#8fd6d4;--obc:#56ada9;--ciz:#f0a04b;--do:#f08a4b;--csu:#b493e8;--zak:#7ea6e8;--sub:#9cc65a;--plus:#56ada9;--minus:#f08a4b;--stin:none;color-scheme:dark}}
 :root[data-tema="tmave"]{--bg:#141718;--fg:#e9ecec;--mut:#a7b0b1;--soft:#1f2425;--soft2:#262c2d;--line:#384042;--grid:#262c2d;
- --acc:#6cc3c4;--acc2:#8fd6d4;--obc:#56ada9;--ciz:#f0a04b;--do:#f08a4b;--csu:#b493e8;--zak:#7ea6e8;--plus:#56ada9;--minus:#f08a4b;--stin:none;color-scheme:dark}
+ --acc:#6cc3c4;--acc2:#8fd6d4;--obc:#56ada9;--ciz:#f0a04b;--do:#f08a4b;--csu:#b493e8;--zak:#7ea6e8;--sub:#9cc65a;--plus:#56ada9;--minus:#f08a4b;--stin:none;color-scheme:dark}
 *{box-sizing:border-box}html,body{margin:0}
 body{background:var(--bg);color:var(--fg);font:16px/1.5 "IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;-webkit-text-size-adjust:100%}
 a{color:var(--acc)}a:hover{color:var(--acc2)}

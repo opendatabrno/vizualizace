@@ -8,15 +8,15 @@
 :root{--bg:#fff;--fg:#1c1c1c;--mut:#5a5a5a;--soft:#f3f3f3;--line:#d6d6d6;--grid:#ececec;--acc:#2f7f86;--hint:#45989c;
  --d0:#8c2d04;--d1:#c6501a;--d2:#e8894a;--d3:#f6c79d;--d4:#f1efe9;--d5:#b9e0da;--d6:#6fbdb4;--d7:#2b8c88;--d8:#0f5b5d;
  --q0:#eef6f5;--q1:#cfe8e5;--q2:#a6d6d1;--q3:#78c0ba;--q4:#4ca5a2;--q5:#2f878a;--q6:#1d6870;--q7:#114a52;
- --hr:#ffffff;--okr:#7d8a8b;--kr:#3c4748;--sel:#e0454f;--obc:#2f7f86;--ciz:#e8891d;--zak:#3866b0;--csu:#6d3fb0;color-scheme:light}
+ --hr:#ffffff;--okr:#7d8a8b;--kr:#3c4748;--sel:#e0454f;--obc:#2f7f86;--ciz:#e8891d;--zak:#3866b0;--sub:#5b7f1f;--csu:#6d3fb0;color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-tema="svetle"]){--bg:#141718;--fg:#e9ecec;--mut:#a7b0b1;--soft:#1f2425;--line:#384042;--grid:#262c2d;--acc:#6cc3c4;
  --d0:#f08a4b;--d1:#c9632c;--d2:#8f4a26;--d3:#553223;--d4:#2a2d2d;--d5:#1f4a49;--d6:#2a7471;--d7:#45a39e;--d8:#86d6cd;
  --q0:#1c3134;--q1:#1f4549;--q2:#235a5e;--q3:#2b7376;--q4:#3a8f8f;--q5:#56ada9;--q6:#7fcac3;--q7:#b5e6de;
- --hr:#141718;--okr:#59686a;--kr:#b4c0c1;--sel:#ff6b72;--obc:#56ada9;--ciz:#f0a04b;--zak:#7ea6e8;--csu:#b493e8;color-scheme:dark}}
+ --hr:#141718;--okr:#59686a;--kr:#b4c0c1;--sel:#ff6b72;--obc:#56ada9;--ciz:#f0a04b;--zak:#7ea6e8;--sub:#9cc65a;--csu:#b493e8;color-scheme:dark}}
 :root[data-tema="tmave"]{--bg:#141718;--fg:#e9ecec;--mut:#a7b0b1;--soft:#1f2425;--line:#384042;--grid:#262c2d;--acc:#6cc3c4;
  --d0:#f08a4b;--d1:#c9632c;--d2:#8f4a26;--d3:#553223;--d4:#2a2d2d;--d5:#1f4a49;--d6:#2a7471;--d7:#45a39e;--d8:#86d6cd;
  --q0:#1c3134;--q1:#1f4549;--q2:#235a5e;--q3:#2b7376;--q4:#3a8f8f;--q5:#56ada9;--q6:#7fcac3;--q7:#b5e6de;
- --hr:#141718;--okr:#59686a;--kr:#b4c0c1;--sel:#ff6b72;--obc:#56ada9;--ciz:#f0a04b;--zak:#7ea6e8;--csu:#b493e8;color-scheme:dark}
+ --hr:#141718;--okr:#59686a;--kr:#b4c0c1;--sel:#ff6b72;--obc:#56ada9;--ciz:#f0a04b;--zak:#7ea6e8;--sub:#9cc65a;--csu:#b493e8;color-scheme:dark}
 *{box-sizing:border-box}html,body{margin:0}
 body{background:var(--bg);color:var(--fg);font:15px/1.4 "IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;
  padding:14px 16px calc(12px + env(safe-area-inset-bottom,0px));max-width:1180px;margin:0 auto}
@@ -126,6 +126,7 @@ function tabulka(roky,o,c){return `<table class="tab"><tr><td><b>rok</b></td><td
 if(G==='mesto')Promise.all([nacti('mestske_casti.json'),nacti('../podklady/mestske_casti.json')]).then(([d,h])=>mesto(d,h)).catch(()=>chyba('mestske_casti.json'));
 else if(G==='obec')nacti('obce.json').then(obec).catch(()=>chyba('obce.json'));
 else if(G==='zaci')Promise.all([nacti('obce.json'),nacti('../podklady/obce.json'),nacti('../zaci/obce.json')]).then(([d,h,z])=>mapa(d,h,rezimZaci(d,z))).catch(()=>chyba('zaci/obce.json'));
+else if(G==='subjekty')Promise.all([nacti('obce.json'),nacti('../podklady/obce.json'),nacti('../subjekty/obce.json')]).then(([d,h,s])=>mapa(d,h,rezimSubjekty(d,s))).catch(()=>chyba('subjekty/obce.json'));
 else Promise.all([nacti('obce.json'),nacti('../podklady/obce.json')]).then(([d,h])=>mapa(d,h,rezimObyvatele(d))).catch(()=>chyba('obce.json'));
 
 /* ---------- režimy mapy obcí: co se barví, jaké roky, co je v detailu ---------- */
@@ -183,6 +184,52 @@ function rezimZaci(D,Zd){
     <details><summary class="zpet">Tabulka po letech</summary><table class="tab"><tr><td><b>rok</b></td><td><b>MŠ</b></td><td><b>ZŠ</b></td><td><b>celkem</b></td></tr>${roky.map((y,i)=>`<tr><td>${y}</td><td>${cis(z[2][i])}</td><td>${cis(z[3][i])}</td><td>${cis(z[4][i])}</td></tr>`).reverse().join('')}</table></details>
     <p class="pozn" style="margin-top:10px"><a href="../obec/?kod=${k}#zaci" target="_top" style="color:var(--acc)">Profil obce</a> · <a href="../zaci/" target="_top" style="color:var(--acc)">téma Žáci</a></p>`}}
 }
+/* subjekty: RES (ČSÚ) jen poslední rok, veřejný rejstřík (ARES) po letech; obyvatelé MV v posledním roce */
+const UK_SUBJ=[['na1000','Subjekty na 1 000 obyv.'],['prav','Právnické osoby'],['spolky','Spolky'],['zmena','Změna rejstříku']];
+const PRAHY_S={na1000:[160,180,200,220,240,270,320],prav:[22,28,34,40,48,60,80],spolky:[5,7,9,12,15,20,28],zmena:[-.3,-.15,-.05,-.01,.01,.15,.3,.6]};
+const MALE_S=10; // obec s méně subjekty v rejstříku má procenta náhodná, zůstane šedá
+const HINT_S={na1000:'Jak číst: všechny aktivní ekonomické subjekty se sídlem v obci (firmy, živnostníci, spolky, SVJ, obce a další) na 1 000 obyvatel. Hodně jich mají velká města a rekreační obce, kde sídlí i lidé, kteří tu nebydlí.',
+ prav:'Jak číst: právnické osoby (s.r.o., akciové společnosti, družstva, spolky, SVJ a další) na 1 000 obyvatel. Firmy často sídlí v Praze a velkých městech na adrese účetní nebo virtuálního sídla.',
+ spolky:'Jak číst: spolky na 1 000 obyvatel, tedy hasiči, sportovní kluby, myslivci a další. V malých obcích je jich na obyvatele víc.',
+ zmena:'Jak číst: změna počtu subjektů ve veřejném rejstříku (bez živnostníků) mezi zvolenými roky. Počítá se podle dnešního sídla, kdo se přestěhoval, je ve všech letech v nové obci. Od roku 2014 jsou v rejstříku i spolky a SVJ.'};
+function rezimSubjekty(D,S){
+ const roky=S.roky,posl=roky.length-1,jo=D.roky.length-1,obyv=k=>D.obce[k]?D.obce[k][2][jo]:null;
+ const sl={prav:6,spolky:10};
+ const hod=(uk,k,a,b)=>{const s=S.obce[k];if(!s)return null;
+  if(uk==='zmena'){const r=s[2];return r[a]>=MALE_S&&r[b]!=null?r[b]/r[a]-1:null}
+  const o=obyv(k);if(!o)return null;return (uk==='na1000'?s[4].at(-1):s[sl[uk]])/o*1000};
+ const barvaS=(uk,v)=>{if(v==null)return 'var(--soft)';const p=PRAHY_S[uk];let i=0;while(i<p.length&&v>=p[i])i++;return uk==='zmena'?`var(--d${i})`:`var(--q${i})`};
+ const fmt=(uk,v)=>v==null?'–':uk==='zmena'?pct(v,true):cis(v);
+ const legS=(el,uk)=>{const z=uk==='zmena',p=PRAHY_S[uk],f=v=>z?(v>0?'+':'')+String(Math.round(v*100)).replace('-','−')+' %':cis(v);
+  el.innerHTML=[...p.map((v,i)=>`<span><i style="background:${z?`var(--d${i})`:`var(--q${i})`}"></i>${i?f(p[i-1])+' až '+f(v):'pod '+f(v)}</span>`),
+   `<span><i style="background:${z?'var(--d8)':'var(--q7)'}"></i>nad ${f(p[p.length-1])}</span>`,
+   z?`<span><i style="background:var(--soft)"></i>pod ${MALE_S} subjektů</span>`:''].join('')};
+ const den=s=>s?new Date(s).toLocaleDateString('cs-CZ'):'';
+ const text=(uk,ra,rb)=>({na1000:`Ekonomické subjekty na 1 000 obyvatel, stav k ${den(S.stav.res)}`,prav:`Právnické osoby na 1 000 obyvatel, stav k ${den(S.stav.res)}`,
+  spolky:`Spolky na 1 000 obyvatel, stav k ${den(S.stav.res)}`,zmena:`Změna počtu subjektů ve veřejném rejstříku ${ra}–${rb}`})[uk];
+ return {roky,a0:Math.max(0,roky.indexOf(2014)),ukazatele:UK_SUBJ,vychozi:'na1000',jenB:uk=>uk!=='zmena',bezRoku:uk=>uk!=='zmena',
+  nadpis:'Ekonomické subjekty v obcích',hint:uk=>HINT_S[uk],text,hodnota:hod,barva:barvaS,legenda:legS,
+  zdroj:`Zdroj: RES (ČSÚ) k ${den(S.stav.res)}, veřejný rejstřík ARES (MF ČR) k ${den(S.stav.ares)}, RÚIAN, zpracování <a href="https://github.com/opendatabrno/subjekty">opendatabrno/subjekty</a>; obyvatelé MV ČR k 1. 1. ${D.roky[jo]}`,
+  vel:k=>D.obce[k][2][jo]||0,
+  tip:(uk,k,a,b)=>{const s=S.obce[k];return s?`${fmt(uk,hod(uk,k,a,b))} · ${cis(s[4].at(-1))} subjektů`:'bez dat'},
+  detail:(uk,k,a,b)=>{const s=S.obce[k];if(!s)return '<p class="pozn" style="margin-top:12px">Za obec nejsou data.</p>';
+   const v=hod(uk,k,a,b),o=obyv(k);
+   return `<div class="velke">${fmt(uk,v)}</div><p class="pozn">${esc(text(uk,roky[a],roky[b]))}<br>
+    ${cis(s[4].at(-1))} subjektů v RES${o?`, ${cis(o)} obyvatel`:''}: ${cis(s[5])} fyzických a ${cis(s[6])} právnických osob<br>
+    s.r.o. ${cis(s[7])} · a. s. ${cis(s[8])} · družstva ${cis(s[9])} · spolky ${cis(s[10])} · SVJ ${cis(s[11])} · ostatní ${cis(s[12])}<br>
+    v roce ${S.roky_res.at(-1)} vzniklo ${cis(s[13])}, zaniklo ${cis(s[14])}</p>
+    <h3>Veřejný rejstřík ${roky[0]}–${roky[posl]}</h3>${grafS(roky,s[2],s[3])}
+    <details><summary class="zpet">Tabulka po letech</summary><table class="tab"><tr><td><b>rok</b></td><td><b>rejstřík</b></td><td><b>s.r.o.</b></td></tr>${roky.map((y,i)=>`<tr><td>${y}</td><td>${cis(s[2][i])}</td><td>${cis(s[3][i])}</td></tr>`).reverse().join('')}</table></details>
+    <p class="pozn" style="margin-top:10px"><a href="../obec/?kod=${k}#subjekty" target="_top" style="color:var(--acc)">Profil obce</a> · <a href="../subjekty/" target="_top" style="color:var(--acc)">téma Subjekty</a></p>`}}
+}
+function grafS(roky,r,sro,W=280,H=110){
+ const mx=Math.max(...r.filter(v=>v!=null),1)*1.08,xs=i=>46+i*(W-52)/(roky.length-1),ys=v=>H-18-(H-26)*v/mx;
+ const cara=a=>a.map((v,i)=>v==null?'':`${xs(i).toFixed(1)},${ys(v).toFixed(1)}`).filter(Boolean).join(' ');
+ const krok=nice(mx/3);let s=roky.map((y,i)=>y%5===0&&i>1&&i<roky.length-2?`<line class="mrizka" x1="${xs(i)}" x2="${xs(i)}" y1="8" y2="${H-18}"/><text class="osa" x="${xs(i)}" y="${H-2}" text-anchor="middle">${y}</text>`:'').join('');
+ for(let v=0;v<=mx;v+=krok)s+=`<line class="mrizka" x1="46" x2="${W}" y1="${ys(v)}" y2="${ys(v)}"/><text class="osa" x="42" y="${ys(v)+4}" text-anchor="end">${kratce(v)}</text>`;
+ return `<svg viewBox="0 0 ${W} ${H}" aria-label="Vývoj počtu subjektů ve veřejném rejstříku">${s}<polyline points="${cara(r)}" fill="none" stroke="var(--sub)" stroke-width="2"/><polyline points="${cara(sro)}" fill="none" stroke="var(--csu)" stroke-width="2"/>
+  <text class="osa" x="46" y="${H-2}">${roky[0]}</text><text class="osa" x="${W}" y="${H-2}" text-anchor="end">${roky[roky.length-1]}</text></svg>
+  <p class="pozn"><span style="color:var(--sub);font-weight:700">—</span> všechny subjekty v rejstříku · <span style="color:var(--csu);font-weight:700">—</span> s.r.o.</p>`}
 /* malý graf MŠ a ZŠ */
 function grafZ(roky,ms,zs,W=280,H=110){
  const mx=Math.max(...ms.filter(v=>v!=null),...zs.filter(v=>v!=null),1)*1.08,xs=i=>46+i*(W-52)/(roky.length-1),ys=v=>H-18-(H-26)*v/mx;
@@ -278,14 +325,14 @@ function mapa(D,H,K){
   const r=D.obce[vyb];
   $('detail').innerHTML=`<h2>${esc(r[0])}</h2><div class="kraj">okres ${esc(D.okresy[r[1]]||'—')}</div>${K.detail(uk,vyb,a,b)}`}
  function kresli(){
-  const jb=K.jenB(uk);pUk(uk);sa.value=roky[a];sb.value=roky[b];sa.disabled=jb;sa.style.opacity=jb?.4:1;
+  const jb=K.jenB(uk),br=!!(K.bezRoku&&K.bezRoku(uk));pUk(uk);sa.value=roky[a];sb.value=roky[b];sa.disabled=jb;sa.style.opacity=jb?.4:1;sb.disabled=br;sb.style.opacity=br?.4:1;
   $('sub').textContent=K.text(uk,roky[a],roky[b])+(kraj?' · '+(D.kraje[kraj]||''):' · všechny obce ČR');
   $('hint').textContent=K.hint(uk);
   for(const p of cesty)p.style.fill=K.barva(uk,K.hodnota(uk,p.dataset.k,a,b));
   const sel=svg.querySelector(`.u[data-k="${vyb}"]`);
   $('vyb').innerHTML=sel?`<path class="cara" d="${sel.getAttribute('d')}" stroke="var(--sel)" stroke-width="2.4"/>`:'';
   K.legenda($('leg'),uk);detail();if(stredy)popisky();
-  nastavUrl({ukazatel:uk===K.vychozi?null:uk,od:jb||a===a0?null:roky[a],do:b===N-1?null:roky[b],kraj:kraj||null,obec:vyb})}
+  nastavUrl({ukazatel:uk===K.vychozi?null:uk,od:jb||a===a0?null:roky[a],do:br||b===N-1?null:roky[b],kraj:kraj||null,obec:vyb})}
  kresli();if(kraj)zoom();else requestAnimationFrame(()=>popisky());
 }
 

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="cs"><head><meta charset="utf-8"><title>Subjekty · Obyvatelé ČR v datech</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Firmy, spolky, SVJ, živnostníci a další ekonomické subjekty v obcích ČR: veřejný rejstřík od roku 1990, všechny subjekty včetně OSVČ od konce roku 2022, obory podnikání.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+.zahl{padding:30px 0 4px}
+.zeb td.sp{width:120px}.zeb td.sp svg{height:26px}
+.zeb tr{cursor:pointer}.zeb tbody tr:hover td{background:var(--soft)}
+.zeb .por{color:var(--mut);width:2.5em}
+.obory{display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,2fr) 5.5em;gap:5px 12px;align-items:center;font-size:14px}
+.obory .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.obory .n b{display:inline-block;width:1.4em;color:var(--mut)}
+.obory .b{display:flex;height:16px;background:var(--soft);border-radius:2px;overflow:hidden}
+.obory .b i{display:block;height:100%}
+.obory .c{text-align:right;font-variant-numeric:tabular-nums}
+.obory>div[data-i]{cursor:default}
+@media (max-width:600px){.obory{grid-template-columns:minmax(0,1fr) 5em}.obory .b{grid-column:1/-1;margin-bottom:6px}}
+</style></head><body>
+<main class="obal">
+  <section class="zahl"><div class="stitek" style="color:var(--sub)">Téma</div><h1>Subjekty</h1>
+    <p class="uvod">Firmy, spolky, společenství vlastníků, živnostníci a další ekonomické subjekty podle obce sídla.
+      Veřejný rejstřík (ARES) sahá do roku 1990, úplný registr všech subjektů včetně OSVČ (RES ČSÚ) do konce roku 2022.</p>
+    <div id="hl" class="male" style="max-width:420px"></div></section>
+  <div class="dlazdice" id="klic" style="margin-top:22px"></div>
+
+  <h2>Veřejný rejstřík od roku 1990</h2>
+  <p class="uvod">Subjekty zapsané v obchodním, spolkovém, nadačním rejstříku, rejstříku ústavů, SVJ a obecně prospěšných společností,
+    které nebyly vymazány, vždy k 31. 12. Bez živnostníků a subjektů mimo rejstřík (obce, příspěvkové organizace, státní instituce).</p>
+  <div class="legenda" id="leg-r"></div>
+  <div id="g-rejstrik"></div>
+  <p class="pozn" id="rejstrik-pozn"></p>
+
+  <h2>Všechny subjekty včetně OSVČ</h2>
+  <p class="uvod">Registr ekonomických subjektů ČSÚ: aktivní (nezaniklé) subjekty k 31. 12., v posledním roce k datu dat. Zaniklé subjekty ČSÚ zveřejňuje jen za poslední roky, proto řada začíná koncem roku 2022.</p>
+  <div class="legenda"><span><i style="background:var(--sub)"></i>fyzické osoby (hlavně OSVČ)</span><span><i style="background:var(--csu)"></i>právnické osoby</span><span><i style="background:var(--mut)"></i>typ neuveden</span></div>
+  <div id="g-res"></div>
+
+  <h2>Obory</h2>
+  <p class="uvod" id="obory-uvod"></p>
+  <div class="legenda"><span><i style="background:var(--sub)"></i>fyzické osoby</span><span><i style="background:var(--csu)"></i>právnické osoby</span></div>
+  <div class="obory" id="obory"></div>
+
+  <h2>Mapa obcí</h2>
+  <p class="uvod">Kolik subjektů sídlí v obcích na 1 000 obyvatel, kolik je mezi nimi právnických osob a spolků a jak se měnil počet subjektů ve veřejném rejstříku. Kliknutím na obec zobrazíte detail.</p>
+  <div class="rama"><iframe src="../obyvatele/graf.html?graf=subjekty&nadpis=0" height="780" title="Mapa ekonomických subjektů v obcích" loading="lazy"></iframe></div>
+
+  <h2>Obce</h2>
+  <p class="uvod">Žebříček obcí podle subjektů se sídlem v obci. Kliknutím na řádek otevřete profil obce.</p>
+  <div class="ovl">
+    <select id="z-uk" aria-label="Ukazatel"><option value="res">nejvíc subjektů</option><option value="na1000">nejvíc subjektů na 1 000 obyvatel</option>
+      <option value="prav">nejvíc právnických osob na 1 000 obyvatel</option><option value="spolky">nejvíc spolků na 1 000 obyvatel</option>
+      <option value="rust">nejrychleji rostoucí rejstřík</option></select>
+    <select id="z-kraj" aria-label="Kraj"><option value="">celá ČR</option></select>
+    <select id="z-vel" aria-label="Velikost"><option value="0">všechny obce</option><option value="1000" selected>nad 1 000 obyvatel</option><option value="10000">nad 10 000 obyvatel</option></select>
+  </div>
+  <div class="posuv"><table class="tab zeb" id="zeb"></table></div>
+  <p class="pozn" id="zeb-pozn"></p>
+
+  <h2>Na co si dát pozor</h2>
+  <div class="dve">
+    <div class="blok"><h3>Jen dnešní sídlo</h3><p>Registry uvádějí jen současné sídlo subjektu (u zaniklých poslední). Kdo se přestěhoval, počítá se ve všech letech v obci, kde sídlí dnes. Vývoj za ČR je přesný, vývoj v jednotlivých obcích přibližný. Sídlo také není místo podnikání: firmy často sídlí na adrese účetní nebo virtuálního sídla, typicky ve velkých městech.</p></div>
+    <div class="blok"><h3>RES v obcích jen poslední rok</h3><p>Zaniklé živnostníky ČSÚ zveřejňuje bez adresy. Za ČR jsou počty úplné, ale v obcích v dřívějších letech chybějí OSVČ, které později zanikly. Proto u obcí ukazujeme z RES jen poslední rok a vývoj z veřejného rejstříku.</p></div>
+    <div class="blok"><h3>Zlomy</h3><p>V roce 2014 přešly s novým občanským zákoníkem do veřejného rejstříku spolky a SVJ (+150 tis. zápisů), v roce 2016 byly vymazány nepřevedené spolky. V roce 2023 ČSÚ hromadně ukončil neaktivní subjekty v RES (asi 190 tis.).</p><p><a href="../metodika/#zlomy">Zlomy v datech →</a></p></div>
+    <div class="blok"><h3>Poslední rok je neúplný</h3><p id="pozn-stav">Data RES a ARES mají různé dny aktualizace, vznik a zánik v posledním roce jsou jen za jeho část. Výmaz z rejstříku bývá opožděný za skutečným koncem činnosti, často o roky.</p></div>
+  </div>
+
+  <h2>Data</h2>
+  <div class="blok"><p>Datová sada <a href="https://github.com/opendatabrno/subjekty">opendatabrno/subjekty</a> · <a href="https://opendatabrno.github.io/subjekty/">stažení CSV a Excel</a> · <a href="../metodika/">metodika</a></p></div>
+</main>
+<script src="../spolecne/moduly.js"></script>
+<script src="../spolecne/zaklad.js"></script>
+<script>
+Z.hlavicka('subjekty');
+Z.hledani(document.getElementById('hl'), { placeholder: 'Profil obce…' });
+const $ = id => document.getElementById(id), { cis, pct, esc, kratce, znamenko } = Z;
+const dl = (h, p, z) => `<div class="dl"><div class="h">${h}</div><div class="p">${p}</div>${z ? `<div class="z">${z}</div>` : ''}</div>`;
+const den = s => s ? new Date(s).toLocaleDateString('cs-CZ') : '';
+
+/* sloupcový graf: řady se skládají na sebe */
+function sloupce(el, popisky, rady, { vyska = 320, tip, znacky = {}, kazdy = 1 } = {}) {
+  const W = 1000, H = vyska, ml = 62, mr = 8, mt = 22, mb = 28, n = popisky.length;
+  const souc = popisky.map((_, j) => rady.reduce((s, r) => s + (r.v[j] || 0), 0));
+  const krok = Z.pekne(Math.max(...souc) * 1.08 / 4), mx = Math.ceil(Math.max(...souc) * 1.08 / krok) * krok;
+  const y = v => mt + (1 - v / mx) * (H - mt - mb), sl = (W - ml - mr) / n, bw = sl * (n > 20 ? .78 : .66);
+  let s = `<svg class="graf" viewBox="0 0 ${W} ${H}" role="img">`;
+  for (let v = 0; v <= mx + 1e-9; v += krok) s += `<line class="mr" x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}"/><text class="osa" x="${ml - 8}" y="${y(v) + 4}" text-anchor="end">${Z.kratce(v)}</text>`;
+  popisky.forEach((p, j) => {
+    const x = ml + j * sl + (sl - bw) / 2; let z = 0;
+    s += `<g class="sl" data-j="${j}"><rect x="${ml + j * sl}" y="${mt}" width="${sl}" height="${H - mt - mb}" fill="transparent"/>`;
+    for (const r of rady) { const v = r.v[j] || 0; s += `<rect x="${x}" y="${y(z + v)}" width="${bw}" height="${y(z) - y(z + v)}" fill="${r.b}"/>`; z += v }
+    if (j % kazdy === 0 || j === n - 1) s += `<text class="osa" x="${x + bw / 2}" y="${H - 9}" text-anchor="middle">${p}</text>`;
+    if (znacky[j]) s += `<text x="${x + bw / 2}" y="${y(z) - 7}" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--fg)">${znacky[j]}</text>`;
+    s += '</g>';
+  });
+  el.innerHTML = s + '</svg>';
+  el.onmousemove = e => { const g = e.target.closest('.sl'); Z.tip(e, g ? tip(+g.dataset.j) : '') };
+  el.onmouseleave = e => Z.tip(e, '');
+}
+
+Promise.all([Z.nacti('subjekty/obce.json'), Z.nacti('obyvatele/obce.json')]).then(([D, V]) => {
+  const c = D.cr, RR = c.roky, nr = RR.length - 1, RS = c.roky_res, ns = RS.length - 1;
+  const res = c.res_aktivni, nezj = RS.map((_, j) => res[j] - c.res_fyzicke[j] - c.res_pravnicke[j]);
+  const j14 = RR.indexOf(2014), j04 = RR.indexOf(2004);
+  $('klic').innerHTML = [
+    dl(kratce(res[ns]), `ekonomických subjektů k ${den(D.stav.res)}`, 'všechny aktivní subjekty v RES včetně OSVČ'),
+    dl(kratce(c.res_fyzicke[ns]), 'fyzických osob (hlavně OSVČ)', `${pct(c.res_fyzicke[ns] / res[ns], false, 0)} všech subjektů`),
+    dl(kratce(c.res_pravnicke[ns]), 'právnických osob', `z toho ${kratce(c.sro[nr])} s.r.o. ve veřejném rejstříku`),
+    dl(kratce(c.aktivni[nr]), `subjektů ve veřejném rejstříku k ${den(D.stav.ares)}`, `<span class="${znamenko(c.aktivni[nr] - c.aktivni[j04])}">${pct(c.aktivni[nr] / c.aktivni[j04] - 1)}</span> od ${RR[j04]}`),
+    dl(cis(c.res_vznikle[ns]), `subjektů vzniklo v roce ${RS[ns]}`, `zaniklo ${cis(c.res_zanikle[ns])} (do ${den(D.stav.res)})`),
+  ].join('');
+
+  // veřejný rejstřík podle právní formy
+  const formy = [['sro', 's.r.o.', 'var(--sub)'], ['as', 'akciové společnosti', 'var(--acc)'], ['druzstva', 'družstva', 'var(--ciz)'],
+    ['spolky', 'spolky', 'var(--csu)'], ['svj', 'SVJ', 'var(--zak)'], ['ostatni', 'ostatní', 'var(--mut)']];
+  $('leg-r').innerHTML = formy.map(f => `<span><i style="background:${f[2]}"></i>${f[1]}</span>`).join('');
+  const zn = {}; if (j14 >= 0) zn[j14] = 'spolky a SVJ';
+  sloupce($('g-rejstrik'), RR, formy.map(f => ({ v: c[f[0]], b: f[2] })), { kazdy: 2, znacky: zn,
+    tip: j => `<b>${j === nr ? den(D.stav.ares) : '31. 12. ' + RR[j]}</b><br>${formy.map(f => `${f[1]}: ${cis(c[f[0]][j])}`).join('<br>')}<br><b>celkem: ${cis(c.aktivni[j])}</b><br>zapsáno v roce: ${cis(c.zapsano[j])}<br>vymazáno v roce: ${cis(c.vymazano[j])}` });
+  $('rejstrik-pozn').textContent = `Poslední sloupec je stav k ${den(D.stav.ares)}. Spolky a SVJ vznikaly i před rokem 2014, do veřejného rejstříku se ale zapsaly až po změně zákona.`;
+
+  sloupce($('g-res'), RS, [{ v: c.res_fyzicke, b: 'var(--sub)' }, { v: c.res_pravnicke, b: 'var(--csu)' }, { v: nezj, b: 'var(--mut)' }], { vyska: 280,
+    znacky: { [RS.indexOf(2023)]: 'hromadný zánik' },
+    tip: j => `<b>${j === ns ? den(D.stav.res) : '31. 12. ' + RS[j]}</b><br>fyzické osoby: ${cis(c.res_fyzicke[j])}<br>právnické osoby: ${cis(c.res_pravnicke[j])}${nezj[j] ? `<br>typ neuveden: ${cis(nezj[j])}` : ''}<br><b>celkem: ${cis(res[j])}</b>${c.res_vznikle[j] != null ? `<br>vzniklo v roce: ${cis(c.res_vznikle[j])}<br>zaniklo v roce: ${cis(c.res_zanikle[j])}` : ''}` });
+
+  // obory
+  const ob = [...D.nace.sekce].sort((a, b) => b[2] - a[2]), mx = ob[0][2];
+  $('obory-uvod').textContent = `Hlavní činnost aktivních subjektů podle CZ-NACE (sekce), stav k ${den(D.stav.res)}. U ${kratce(D.nace.nezjisteno)} subjektů obor uveden není.`;
+  $('obory').innerHTML = ob.map((s, i) => `<div class="n" title="${esc(s[1])}"><b>${s[0]}</b>${esc(s[1])}</div>
+    <div class="b" data-i="${i}" style="width:${s[2] / mx * 100}%"><i style="width:${s[3] / s[2] * 100}%;background:var(--sub)"></i><i style="width:${s[4] / s[2] * 100}%;background:var(--csu)"></i></div>
+    <div class="c">${kratce(s[2])}</div>`).join('');
+  $('obory').onmousemove = e => { const b = e.target.closest('[data-i]'); const s = b && ob[+b.dataset.i];
+    Z.tip(e, s ? `<b>${esc(s[1])}</b><br>celkem: ${cis(s[2])}<br>fyzické osoby: ${cis(s[3])}<br>právnické osoby: ${cis(s[4])}` : '') };
+  $('obory').onmouseleave = e => Z.tip(e, '');
+
+  // žebříček: obec = [název, okres, rejstřík[], rejstřík s.r.o.[], RES[], fyzické, právnické, sro, as, družstva, spolky, svj, ostatní, vzniklé, zaniklé]
+  for (const [k, v] of Object.entries(V.kraje)) $('z-kraj').add(new Option(v, k));
+  const R = D.roky, n = R.length - 1, i14 = R.indexOf(2014), jo = V.roky.length - 1;
+  const obyv = k => V.obce[k] ? V.obce[k][2][jo] : null;
+  $('zeb-pozn').textContent = `Subjekty, fyzické a právnické osoby jsou z RES k ${den(D.stav.res)}, obyvatelé MV k 1. 1. ${V.roky[jo]}. Změna rejstříku je od roku ${R[i14]}, kdy do něj přešly spolky a SVJ, a podle dnešního sídla subjektů.`;
+  const kresli = () => {
+    const uk = $('z-uk').value, kr = $('z-kraj').value, vel = +$('z-vel').value;
+    const f = { res: r => r[4][r[4].length - 1], na1000: (r, k) => r[4].at(-1) / obyv(k) * 1000, prav: (r, k) => r[6] / obyv(k) * 1000,
+      spolky: (r, k) => r[10] / obyv(k) * 1000, rust: r => r[2][i14] >= 20 ? r[2][n] / r[2][i14] - 1 : NaN }[uk];
+    const sez = Object.entries(D.obce).filter(([k, r]) => obyv(k) && obyv(k) >= vel && (!kr || r[1].slice(0, 5) === kr))
+      .map(([k, r]) => [k, r, f(r, k)]).filter(x => isFinite(x[2])).sort((x, y) => y[2] - x[2]).slice(0, 25);
+    $('zeb').innerHTML = `<thead><tr><th class="por">#</th><th>Obec</th><th>Okres</th><th class="c">Subjekty</th><th class="c">Na 1 000 obyv.</th><th class="c">Fyzické</th><th class="c">Právnické</th><th class="c">Spolky</th><th class="c">Rejstřík od ${R[i14]}</th><th class="sp">Rejstřík</th></tr></thead><tbody>` +
+      sez.map(([k, r], i) => { const z = r[2][i14] ? r[2][n] / r[2][i14] - 1 : null, o = obyv(k), s = r[4].at(-1);
+        return `<tr data-k="${k}"><td class="por">${i + 1}.</td><td><a href="${Z.odkazObce(k)}">${esc(r[0])}</a></td><td class="mut">${esc(V.okresy[r[1]] || '')}</td>
+        <td class="c"><b>${cis(s)}</b></td><td class="c">${o ? cis(Math.round(s / o * 1000)) : '–'}</td><td class="c">${cis(r[5])}</td><td class="c">${cis(r[6])}</td><td class="c">${cis(r[10])}</td>
+        <td class="c ${z == null ? '' : znamenko(z)}">${z == null ? '–' : pct(z)}</td><td class="sp">${Z.spark(r[2], 'var(--sub)', { vyska: 26, sirka: 120 })}</td></tr>` }).join('') + '</tbody>';
+  };
+  ['z-uk', 'z-kraj', 'z-vel'].forEach(id => $(id).onchange = kresli);
+  $('zeb').onclick = e => { const tr = e.target.closest('tr[data-k]'); if (tr && !e.target.closest('a')) location.href = Z.odkazObce(tr.dataset.k) };
+  kresli();
+  $('pozn-stav').textContent = `RES je k ${den(D.stav.res)}, veřejný rejstřík (ARES) k ${den(D.stav.ares)}. Vznik a zánik v roce ${RS[ns]} jsou jen za jeho část. Výmaz z rejstříku bývá opožděný za skutečným koncem činnosti, často o roky.`;
+}).catch(e => { $('klic').innerHTML = '<p class="mut">Data se nepodařilo načíst.</p>'; console.error(e) });
+</script>
+</body></html>

@@ -68,7 +68,7 @@ Z.nacti('data/souhrn.json').then(S => {
   Z.nabeh(document.getElementById('vh'), O.obyvatele[n]);
 
   // karty témat z MODULY
-  document.getElementById('moduly').innerHTML = MODULY.map(m => {
+  document.getElementById('moduly').innerHTML = MODULY.filter(m => zapnuto(m.id)).map(m => {
     if (m.stav !== 'hotovo') return `<div class="modul pripravujeme" style="--barva:${m.barva}"><span class="stitek">Připravujeme</span><h3>${Z.esc(m.nazev)}</h3><p>${Z.esc(m.popis)}</p></div>`;
     let s = null; try { s = m.souhrn && m.souhrn(S) } catch (e) { console.warn(m.id, e) }
     return `<a class="modul" href="${m.adresa}" style="--barva:${m.barva}"><h3>${Z.esc(m.nazev)}</h3>

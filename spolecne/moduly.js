@@ -5,10 +5,26 @@
    1. přidej sem položku (stav: 'pripravujeme' ukáže na úvodu jen kartu „připravujeme“),
    2. vytvoř složku se stránkou modulu (adresa), vzor je obyvatele/index.html,
    3. data pro grafy připrav ve scripts/build_data.py a doplň složku do nasazení (.github/workflows/pages.yml),
-   4. až bude hotový, přepni stav na 'hotovo'.
+   4. až bude hotový, přepni stav na 'hotovo' a přidej ho do ZAPNUTO níže.
+   Prvky stránek, které patří k jednomu tématu, označ atributem data-modul="id": při vypnutém
+   tématu je zaklad.js odstraní.
 
    souhrn(S) dostane data/souhrn.json a vrací, co se ukáže na kartě: velké číslo, popisek a řadu
    pro malý graf. Funkce je nepovinná. */
+/* Vypínač témat. false = téma zmizí z webu (navigace, úvodní stránka, profil obce, metodika,
+   grafy k vložení) a scripts/build_data.py jeho datovou sadu nestahuje. Nic se nemaže, zapnutím
+   (true) se téma vrátí. Obyvatelé jsou základ webu (profil obce, mapy), jejich data se sestavují vždy.
+   Blok mezi značkami čte i build_data.py: drž formát JSON (uvozovky, bez čárky za poslední položkou). */
+// ZAPNUTO-ZACATEK
+window.ZAPNUTO = {
+  "obyvatele": true,
+  "cizinci": true,
+  "zaci": true,
+  "subjekty": true
+};
+// ZAPNUTO-KONEC
+window.zapnuto = id => window.ZAPNUTO[id] !== false;
+
 window.MODULY = [
   {
     id: 'obyvatele',
@@ -69,6 +85,27 @@ window.MODULY = [
     souhrn: S => ({
       cislo: S.zaci.celkem.at(-1), popisek: `dětí a žáků ve školách obcí k 30. 9. ${S.zaci.roky.at(-1)}`,
       rada: S.zaci.celkem
+    })
+  },
+  {
+    id: 'subjekty',
+    nazev: 'Subjekty',
+    popis: 'Firmy, spolky, SVJ, živnostníci a další ekonomické subjekty v obcích. Veřejný rejstřík od roku 1990, všechny subjekty včetně OSVČ od konce roku 2022, obory podnikání.',
+    barva: 'var(--sub)',
+    adresa: 'subjekty/',
+    stav: 'hotovo',
+    data: [{
+      nazev: 'Ekonomické subjekty v obcích', repo: 'opendatabrno/subjekty', zdroj: 'ARES (MF ČR), RES (ČSÚ), RÚIAN (ČÚZK)',
+      web: 'https://opendatabrno.github.io/subjekty/',
+      soubory: [['subjekty_obce', 'obce × rok: veřejný rejstřík 1990–dosud, RES od konce 2022'],
+                ['subjekty_mestske_casti', 'městské části 8 statutárních měst × rok'],
+                ['subjekty_nace_okresy', 'okresy × obor CZ-NACE × rok (RES)'],
+                ['subjekty_nace_mestske_casti', 'městské části × obor CZ-NACE × rok (RES)']],
+      aktualizace: 'měsíčně (RES i ARES)'
+    }],
+    souhrn: S => ({
+      cislo: S.subjekty.res.at(-1), popisek: `ekonomických subjektů včetně OSVČ k ${new Date(S.subjekty.stav_res).toLocaleDateString('cs-CZ')}`,
+      rada: S.subjekty.rejstrik.slice(-23)
     })
   },
   // Vzor dalšího modulu:

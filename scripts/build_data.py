@@ -1,7 +1,9 @@
 """Data pro vizualizace: stáhne hotové datové sady opendatabrno a připraví z nich malé JSON.
 
     python scripts/build_data.py                  # stáhne CSV z GitHubu
-    python scripts/build_data.py --mistni ../     # CSV z lokálních klonů (../cizinci, ../obyvatele, ../zaci)
+    python scripts/build_data.py --mistni ../     # CSV z lokálních klonů (../cizinci, ../obyvatele, ../zaci, ../subjekty)
+
+Témata vypnutá v spolecne/moduly.js (window.ZAPNUTO) se nestahují ani nesestavují.
 
 Výstup:
     cizinci/mapa.json   – podíl cizinců na obyvatelích po okresech + nejčastější státy
@@ -9,6 +11,7 @@ Výstup:
     obyvatele/obce.json           – obyvatelé a cizinci ve všech obcích po letech
     obyvatele/mestske_casti.json  – totéž za městské části 8 statutárních měst
     zaci/obce.json      – děti v MŠ a žáci v ZŠ zřizovaných obcemi, po obcích a letech, a částka na žáka
+    subjekty/obce.json  – ekonomické subjekty po obcích (veřejný rejstřík po letech, RES v posledním roce), ČR a obory
     data/obce/{kod}.json  – všechny sloupce jedné obce po letech (profil obce, „statické API“)
     data/obce.json        – seznam obcí pro vyhledávání
     data/souhrn.json      – klíčová čísla za ČR pro úvodní stránku
@@ -18,6 +21,7 @@ a zůstane poslední funkční verze).
 """
 import io
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -51,7 +55,25 @@ SLOUPCE = {
                                 "odhad_prostredku_kc", "rok_rozpoctu"],
     ("zaci", "zaci_svazky_obci.csv"): ["rok", "nazev_svazku", "ms_celkem", "zs_celkem", "celkem"],
     ("zaci", "castka_na_zaka.csv"): ["rok", "prijemce", "castka_na_zaka_kc", "jednotka", "udaj", "objem_kc_odhad"],
+    ("subjekty", "subjekty_obce.csv"): ["rok", "stav_k", "kod_obce", "nazev_obce", "kod_okresu", "rejstrik_aktivni",
+                                        "rejstrik_zapsano", "rejstrik_vymazano", "rejstrik_sro",
+                                        "rejstrik_akciove_spolecnosti", "rejstrik_druzstva", "rejstrik_spolky",
+                                        "rejstrik_svj", "rejstrik_ostatni_pravnicke", "subjekty_aktivni",
+                                        "subjekty_vznikle", "subjekty_zanikle", "fyzicke_osoby", "pravnicke_osoby",
+                                        "sro", "akciove_spolecnosti", "druzstva", "spolky", "svj", "ostatni_pravnicke"],
+    ("subjekty", "subjekty_nace_okresy.csv"): ["rok", "stav_k", "kod_okresu", "sekce_nace", "nazev_sekce",
+                                               "subjekty_aktivni", "fyzicke_osoby", "pravnicke_osoby"],
 }
+SUBJ_OD = 2004     # od kterého roku jdou do souborů obcí řady veřejného rejstříku (jako obyvatelé)
+
+
+def zapnuta_temata():
+    """Vypínač témat z spolecne/moduly.js (blok ZAPNUTO-ZACATEK … ZAPNUTO-KONEC je JSON)."""
+    t = (ROOT / "spolecne" / "moduly.js").read_text(encoding="utf-8")
+    m = re.search(r"// ZAPNUTO-ZACATEK\s*window\.ZAPNUTO\s*=\s*(\{.*?\});\s*// ZAPNUTO-KONEC", t, re.S)
+    if not m:
+        raise DataError("spolecne/moduly.js: nenašel jsem blok ZAPNUTO-ZACATEK … ZAPNUTO-KONEC")
+    return json.loads(m.group(1))
 
 
 class DataError(Exception):
@@ -76,6 +98,14 @@ def nacti(repo, soubor, mistni):
     if chybi:
         raise DataError(f"{repo}/{soubor}: chybí sloupce {chybi}")
     return d
+
+
+def nacti_json(repo, soubor, mistni):
+    if mistni:
+        return json.loads((Path(mistni) / repo / "vystup" / soubor).read_text(encoding="utf-8"))
+    r = requests.get(RAW.format(repo=repo, soubor=soubor), timeout=60)
+    r.raise_for_status()
+    return r.json()
 
 
 def kontrola(podminka, zprava):
@@ -255,7 +285,7 @@ SLOUPCE_PROFIL = {
 }
 
 
-def profily(o, mc, z):
+def profily(o, mc, z, sub):
     """Jeden JSON na obec se všemi řadami + seznam obcí pro vyhledávání."""
     roky = sorted(int(y) for y in o.rok.unique())
     cil = ROOT / "data" / "obce"
@@ -264,8 +294,9 @@ def profily(o, mc, z):
         f.unlink()
     mc = mc[mc.kod_mc.notna()]
     mesta = {k: g for k, g in mc.groupby("kod_obce")}
-    roky_z = sorted(int(y) for y in z.rok.unique())
-    skoly = {k: g.set_index("rok").reindex(roky_z) for k, g in z.groupby("kod_obce")}
+    roky_z = sorted(int(y) for y in z.rok.unique()) if z is not None else []
+    skoly = {k: g.set_index("rok").reindex(roky_z) for k, g in z.groupby("kod_obce")} if z is not None else {}
+    so = sub["obce"] if sub else {}
     seznam = []
     for kod, g in o.groupby("kod_obce"):
         g = g.set_index("rok").reindex(roky)
@@ -290,6 +321,9 @@ def profily(o, mc, z):
             radek["zaci"] = {"roky": roky_z, **{k: [None if pd.isna(v) else int(v) for v in h[sl]] for k, sl in
                              (("ms", "ms_celkem"), ("zs", "zs_celkem"), ("celkem", "celkem"),
                               ("prostredky", "odhad_prostredku_kc"))}}
+        if kod in so:
+            radek["subjekty"] = dict(zip(SUBJ_KLICE, so[kod][2:]), roky=sub["roky"], roky_res=sub["roky_res"],
+                                     stav=sub["stav"])
         (cil / f"{kod}.json").write_text(json.dumps(radek, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
         if posl.name == roky[-1]:
             seznam.append([kod, posl.nazev_obce, radek["okres"] or "", radek["obyvatele"][-1]])
@@ -299,25 +333,96 @@ def profily(o, mc, z):
     uloz({"roky": roky, "obce": seznam}, ROOT / "data" / "obce.json")
 
 
-def souhrn(o, okresy, mesicne, zac):
+def souhrn(o, okresy, mesicne, zac, sub):
     """Klíčová čísla za ČR pro úvodní stránku a moduly."""
     cr = o.groupby("rok")[["obyvatele_celkem", "obcane_celkem", "cizinci_celkem", "cizinci_docasna_ochrana",
                            "odhad_csu"]].sum(min_count=1)
     roky = [int(y) for y in cr.index]
-    m = mesicne.groupby("stav_k").cizinci_celkem.sum()
-    ok = okresy.groupby("rok").cizinci_celkem.sum()
+    vysl = {}
+    if okresy is not None:
+        m = mesicne.groupby("stav_k").cizinci_celkem.sum()
+        ok = okresy.groupby("rok").cizinci_celkem.sum()
+        vysl["cizinci"] = {"roky": [int(y) for y in ok.index], "celkem": ok.astype(int).tolist(),
+                           "posledni_mesic": m.index.max(), "posledni_pocet": int(m.iloc[-1]),
+                           "mesicne": [int(v) for v in m.iloc[-60:]], "mesice": [str(x)[:7] for x in m.index[-60:]]}
+    if zac:
+        vysl["zaci"] = {"roky": zac["roky"], **{k: zac["cr"][k] for k in ("ms", "zs", "celkem", "obci")},
+                        **posledni_castka(zac["castka"])}
+    if sub:
+        c = sub["cr"]
+        vysl["subjekty"] = {"roky": c["roky"], "rejstrik": c["aktivni"], "roky_res": c["roky_res"],
+                            "res": c["res_aktivni"], "stav_res": sub["stav"]["res"]}
     uloz({"obyvatele": {"roky": roky, "obyvatele": cr.obyvatele_celkem.astype(int).tolist(),
                         "obcane": cr.obcane_celkem.astype(int).tolist(),
                         "cizinci": cr.cizinci_celkem.astype(int).tolist(),
                         "docasna_ochrana": cr.cizinci_docasna_ochrana.astype(int).tolist(),
                         "odhad_csu": [None if pd.isna(v) else int(v) for v in cr.odhad_csu],
-                        "obci": int((o.rok == roky[-1]).sum())},
-          "cizinci": {"roky": [int(y) for y in ok.index], "celkem": ok.astype(int).tolist(),
-                      "posledni_mesic": m.index.max(), "posledni_pocet": int(m.iloc[-1]),
-                      "mesicne": [int(v) for v in m.iloc[-60:]], "mesice": [str(x)[:7] for x in m.index[-60:]]},
-          "zaci": {"roky": zac["roky"], **{k: zac["cr"][k] for k in ("ms", "zs", "celkem", "obci")},
-                   **posledni_castka(zac["castka"])}},
+                        "obci": int((o.rok == roky[-1]).sum())}, **vysl},
          ROOT / "data" / "souhrn.json")
+
+
+SUBJ_KLICE = ["rejstrik", "rejstrik_sro", "res", "fyzicke", "pravnicke", "sro", "as", "druzstva", "spolky", "svj",
+              "ostatni", "vznikle", "zanikle"]
+
+
+def int_nebo_none(v):
+    return None if pd.isna(v) else int(v)
+
+
+def subjekty(s, nace, stav, obyv):
+    """Ekonomické subjekty: veřejný rejstřík (ARES) po letech, RES (ČSÚ) od 2022, obory po okresech."""
+    roky = sorted(int(y) for y in s.rok.unique())
+    kontrola(roky[0] <= 1990 and roky == list(range(roky[0], roky[-1] + 1)), f"subjekty: chybí roky {roky}")
+    o = s[s.kod_obce.notna()]
+    kontrola(not o.duplicated(["rok", "kod_obce"]).any(), "subjekty: obec je v roce víckrát")
+    posl = o[o.rok == roky[-1]]
+    kontrola(len(posl) > 6000, f"subjekty: v roce {roky[-1]} jen {len(posl)} obcí")
+    nezname = set(posl.kod_obce) - set(obyv.kod_obce)
+    kontrola(not nezname, f"subjekty: obce, které nejsou v sadě obyvatel: {sorted(nezname)[:10]}")
+    cr = s.groupby("rok").sum(numeric_only=True, min_count=1)
+    roky_res = [int(y) for y in cr.index[cr.subjekty_aktivni.notna()]]
+    kontrola(len(roky_res) >= 2 and roky_res[-1] == roky[-1], f"subjekty: RES jen za roky {roky_res}")
+    kontrola(cr.subjekty_aktivni.iloc[-1] > 2_000_000, "subjekty: v RES je v posledním roce málo subjektů")
+    r = cr.loc[roky_res]
+    kontrola((r.fyzicke_osoby + r.pravnicke_osoby <= r.subjekty_aktivni).all(), "subjekty: fyzické + právnické > aktivní")
+    kontrola(cr.rejstrik_aktivni.iloc[-1] > 700_000, "subjekty: ve veřejném rejstříku je málo subjektů")
+
+    roky_o = [y for y in roky if y >= SUBJ_OD]
+    p = o[o.rok >= SUBJ_OD].pivot_table(index="kod_obce", columns="rok",
+                                        values=["rejstrik_aktivni", "rejstrik_sro", "subjekty_aktivni"])
+    res_cols = ["fyzicke_osoby", "pravnicke_osoby", "sro", "akciove_spolecnosti", "druzstva", "spolky", "svj",
+                "ostatni_pravnicke", "subjekty_vznikle", "subjekty_zanikle"]
+    pz = posl.set_index("kod_obce")
+
+    def rada(kod, sl, rr):
+        return [int_nebo_none(p.at[kod, (sl, y)]) if (sl, y) in p.columns and kod in p.index else None for y in rr]
+
+    obce = {kod: [r.nazev_obce, r.kod_okresu if isinstance(r.kod_okresu, str) else "",
+                  rada(kod, "rejstrik_aktivni", roky_o), rada(kod, "rejstrik_sro", roky_o),
+                  rada(kod, "subjekty_aktivni", roky_res)] + [int_nebo_none(r[c]) for c in res_cols]
+            for kod, r in pz.iterrows()}
+
+    n = nace[(nace.rok == nace.rok.max()) & nace.kod_okresu.notna() & (nace.kod_okresu != "-1")]
+    sekce = (n[n.sekce_nace.notna()].groupby(["sekce_nace", "nazev_sekce"])[["subjekty_aktivni", "fyzicke_osoby",
+                                                                           "pravnicke_osoby"]].sum().reset_index())
+    nezj = n[n.sekce_nace.isna()].groupby("kod_okresu").subjekty_aktivni.sum()
+    okresy = {k: {"sekce": dict(zip(g.sekce_nace, g.subjekty_aktivni.astype(int).tolist())),
+                  "nezjisteno": int(nezj.get(k, 0))}
+              for k, g in n[n.sekce_nace.notna()].groupby("kod_okresu")}
+    cr_s = lambda sl, rr: [int_nebo_none(cr.at[y, sl]) for y in rr]
+    return {"roky": roky_o, "roky_res": roky_res, "obce": obce,
+            "stav": {"res": str(posl.stav_k.iloc[0]), "ares": stav.get("ares_stav"), "nace_rok": int(nace.rok.max())},
+            "cr": {"roky": roky, "aktivni": cr_s("rejstrik_aktivni", roky), "zapsano": cr_s("rejstrik_zapsano", roky),
+                   "vymazano": cr_s("rejstrik_vymazano", roky), "sro": cr_s("rejstrik_sro", roky),
+                   "as": cr_s("rejstrik_akciove_spolecnosti", roky), "druzstva": cr_s("rejstrik_druzstva", roky),
+                   "spolky": cr_s("rejstrik_spolky", roky), "svj": cr_s("rejstrik_svj", roky),
+                   "ostatni": cr_s("rejstrik_ostatni_pravnicke", roky),
+                   "roky_res": roky_res, "res_aktivni": cr_s("subjekty_aktivni", roky_res),
+                   "res_fyzicke": cr_s("fyzicke_osoby", roky_res), "res_pravnicke": cr_s("pravnicke_osoby", roky_res),
+                   "res_vznikle": cr_s("subjekty_vznikle", roky_res), "res_zanikle": cr_s("subjekty_zanikle", roky_res)},
+            "nace": {"sekce": [[r.sekce_nace, r.nazev_sekce, int(r.subjekty_aktivni), int(r.fyzicke_osoby),
+                                int(r.pravnicke_osoby)] for r in sekce.itertuples()],
+                     "nezjisteno": int(n[n.sekce_nace.isna()].subjekty_aktivni.sum()), "okresy": okresy}}
 
 
 def posledni_castka(c):
@@ -334,24 +439,42 @@ def uloz(data, cesta):
 
 def main():
     mistni = sys.argv[sys.argv.index("--mistni") + 1] if "--mistni" in sys.argv else None
+    zap = zapnuta_temata()
+    je = lambda t: zap.get(t, True) is not False
+    vyp = [t for t in zap if not je(t)]
+    if vyp:
+        print(f"Vypnutá témata (spolecne/moduly.js): {', '.join(vyp)}")
     print("Načítám datové sady:")
-    okresy = nacti("cizinci", "cizinci_okresy.csv", mistni)
-    staty = nacti("cizinci", "cizinci_okresy_staty.csv", mistni)
-    mesicne = nacti("cizinci", "cizinci_mesicne.csv", mistni)
+    # obyvatelé jsou základ webu (profil obce, mapy) – načítají se vždy
     obyv = nacti("obyvatele", "obyvatele_obce.csv", mistni)
     mc = nacti("obyvatele", "obyvatele_mestske_casti.csv", mistni)
-    z = nacti("zaci", "zaci_obce.csv", mistni)
-    sv = nacti("zaci", "zaci_svazky_obci.csv", mistni)
-    castka = nacti("zaci", "castka_na_zaka.csv", mistni)
+    okresy = staty = mesicne = z = zac = sub = None
+    if je("cizinci"):
+        okresy = nacti("cizinci", "cizinci_okresy.csv", mistni)
+        staty = nacti("cizinci", "cizinci_okresy_staty.csv", mistni)
+        mesicne = nacti("cizinci", "cizinci_mesicne.csv", mistni)
+    if je("zaci"):
+        z = nacti("zaci", "zaci_obce.csv", mistni)
+        sv = nacti("zaci", "zaci_svazky_obci.csv", mistni)
+        castka = nacti("zaci", "castka_na_zaka.csv", mistni)
+    if je("subjekty"):
+        s = nacti("subjekty", "subjekty_obce.csv", mistni)
+        nace = nacti("subjekty", "subjekty_nace_okresy.csv", mistni)
+        stav = nacti_json("subjekty", "stav_dat.json", mistni)
     print("Připravuji data:")
-    uloz(mapa(okresy, staty, obyv), ROOT / "cizinci" / "mapa.json")
-    uloz(vyvoj(mesicne), ROOT / "cizinci" / "vyvoj.json")
+    if okresy is not None:
+        uloz(mapa(okresy, staty, obyv), ROOT / "cizinci" / "mapa.json")
+        uloz(vyvoj(mesicne), ROOT / "cizinci" / "vyvoj.json")
     uloz(obce(obyv), ROOT / "obyvatele" / "obce.json")
     uloz(mestske_casti(mc, obyv), ROOT / "obyvatele" / "mestske_casti.json")
-    zac = zaci(z, sv, castka, obyv)
-    uloz(zac, ROOT / "zaci" / "obce.json")
-    profily(obyv, mc, z)
-    souhrn(obyv, okresy, mesicne, zac)
+    if z is not None:
+        zac = zaci(z, sv, castka, obyv)
+        uloz(zac, ROOT / "zaci" / "obce.json")
+    if je("subjekty"):
+        sub = subjekty(s, nace, stav, obyv)
+        uloz(sub, ROOT / "subjekty" / "obce.json")
+    profily(obyv, mc, z, sub)
+    souhrn(obyv, okresy, mesicne, zac, sub)
 
 
 if __name__ == "__main__":

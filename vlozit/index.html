@@ -22,18 +22,22 @@ a{color:var(--acc)}
 </style></head><body>
 <main class="obal"><div class="zahl" style="padding:30px 0 4px"><div class="stitek">Pro weby obcí a redakce</div><h1>Grafy k vložení</h1><p class="uvod">Mapy a grafy, které si vložíte na svůj web jako iframe. Zkopírujte kód pod grafem, data se aktualizují sama.</p></div>
 
-<h2>Cizinci s povoleným pobytem</h2>
+<section data-modul="cizinci"><h2>Cizinci s povoleným pobytem</h2>
 <p>Data: <a href="https://github.com/opendatabrno/cizinci">opendatabrno/cizinci</a> (MV ČR) a
 <a href="https://github.com/opendatabrno/obyvatele">opendatabrno/obyvatele</a>.</p>
-<div class="grid" id="grid"></div>
+<div class="grid" id="grid"></div></section>
 
-<h2>Obyvatelé obcí</h2>
+<section data-modul="obyvatele"><h2>Obyvatelé obcí</h2>
 <p>Data: <a href="https://github.com/opendatabrno/obyvatele">opendatabrno/obyvatele</a> (informativní počty obyvatel MV ČR k 1. 1.).</p>
-<div class="grid" id="grid2"></div>
+<div class="grid" id="grid2"></div></section>
 
-<h2>Žáci ve školách obcí</h2>
+<section data-modul="zaci"><h2>Žáci ve školách obcí</h2>
 <p>Data: <a href="https://github.com/opendatabrno/zaci">opendatabrno/zaci</a> (MF ČR z výkazů MŠMT, stav k 30. 9.).</p>
-<div class="grid" id="grid3"></div>
+<div class="grid" id="grid3"></div></section>
+
+<section data-modul="subjekty"><h2>Ekonomické subjekty</h2>
+<p>Data: <a href="https://github.com/opendatabrno/subjekty">opendatabrno/subjekty</a> (RES ČSÚ, veřejný rejstřík ARES, RÚIAN).</p>
+<div class="grid" id="grid4"></div></section>
 
 <h2>Parametry</h2>
 <p>Do adresy grafu lze přidat parametry, např. <code>cizinci/graf.html?graf=mapa&amp;okres=CZ0642&amp;nadpis=0</code>.</p>
@@ -41,12 +45,13 @@ a{color:var(--acc)}
 <tr><td><code>nadpis=0</code></td><td>skryje nadpis (hodí se, když ho má stránka, do které graf vkládáte)</td></tr>
 <tr><td><code>ovladani=0</code></td><td>skryje ovládací prvky; graf ukáže stav podle ostatních parametrů</td></tr>
 <tr><td><code>tema=svetle</code> / <code>tema=tmave</code></td><td>vynutí světlé nebo tmavé barvy (jinak podle nastavení zařízení)</td></tr>
-<tr><td><code>cizinci/graf.html?graf=mapa</code></td><td>mapa okresů; dál <code>rok=2025</code>, <code>okres=CZ0642</code> (kód okresu NUTS/LAU), <code>ukazatel=pocet</code> (počet místo podílu)</td></tr>
-<tr><td><code>cizinci/graf.html?graf=vyvoj</code></td><td>měsíční vývoj; dál <code>rezim=staty</code>, <code>staty=UKR,SVK,VNM</code> (kódy ISO), <code>od=2015</code>, <code>osa=log</code></td></tr>
+<tr data-modul="cizinci"><td><code>cizinci/graf.html?graf=mapa</code></td><td>mapa okresů; dál <code>rok=2025</code>, <code>okres=CZ0642</code> (kód okresu NUTS/LAU), <code>ukazatel=pocet</code> (počet místo podílu)</td></tr>
+<tr data-modul="cizinci"><td><code>cizinci/graf.html?graf=vyvoj</code></td><td>měsíční vývoj; dál <code>rezim=staty</code>, <code>staty=UKR,SVK,VNM</code> (kódy ISO), <code>od=2015</code>, <code>osa=log</code></td></tr>
 <tr><td><code>obyvatele/graf.html?graf=mapa</code></td><td>mapa obcí; dál <code>ukazatel=obcane</code> / <code>cizinci</code>, <code>od=2005</code>, <code>do=2026</code>, <code>kraj=CZ064</code> (přiblížení), <code>obec=582786</code> (kód obce)</td></tr>
 <tr><td><code>obyvatele/graf.html?graf=mesto</code></td><td>městské části; dál <code>mesto=582786</code> (kód obce), <code>mc=550973</code> (kód části) a stejné <code>ukazatel</code>, <code>od</code>, <code>do</code></td></tr>
 <tr><td><code>obyvatele/graf.html?graf=obec</code></td><td>jedna obec; <code>obec=582786</code></td></tr>
-<tr><td><code>obyvatele/graf.html?graf=zaci</code></td><td>mapa žáků ve školách obcí; dál <code>ukazatel=ms</code> / <code>na1000</code> / <code>kc</code>, <code>od=2014</code>, <code>do=2024</code>, <code>kraj</code>, <code>obec</code> jako u mapy obcí</td></tr>
+<tr data-modul="subjekty"><td><code>obyvatele/graf.html?graf=subjekty</code></td><td>mapa ekonomických subjektů; dál <code>ukazatel=prav</code> / <code>spolky</code> / <code>zmena</code> (změna veřejného rejstříku, s <code>od=2014</code>, <code>do=2026</code>), <code>kraj</code>, <code>obec</code> jako u mapy obcí</td></tr>
+<tr data-modul="zaci"><td><code>obyvatele/graf.html?graf=zaci</code></td><td>mapa žáků ve školách obcí; dál <code>ukazatel=ms</code> / <code>na1000</code> / <code>kc</code>, <code>od=2014</code>, <code>do=2024</code>, <code>kraj</code>, <code>obec</code> jako u mapy obcí</td></tr>
 </table>
 </main>
 <script>
@@ -59,6 +64,8 @@ const GRAFY2=[
  ['obyvatele/graf.html?graf=obec&obec=582786','Jedna obec','Vývoj počtu obyvatel jedné obce po letech, občané a cizinci. Hodí se k vložení na web obce (parametr obec = kód obce ČSÚ).',520]];
 const GRAFY3=[
  ['obyvatele/graf.html?graf=zaci','Žáci ve školách obcí','Mapa obcí: změna počtu žáků v základních a dětí v mateřských školách, které obec zřizuje, děti a žáci na 1 000 obyvatel a peníze ze sdílených daní na obyvatele.',720]];
+const GRAFY4=[
+ ['obyvatele/graf.html?graf=subjekty','Ekonomické subjekty v obcích','Mapa obcí: firmy, živnostníci, spolky a další subjekty na 1 000 obyvatel, právnické osoby, spolky a změna počtu subjektů ve veřejném rejstříku.',720]];
 const base=new URL('../',location.href).href;
 const karty=(seznam,od)=>seznam.map(([u,t,p,h],j)=>{const i=od+j;
  const kod=`<iframe src="${base}${u.replace(/&/g,'&amp;')}" width="100%" height="${h}" style="border:0" loading="lazy" title="${t}"></iframe>`;
@@ -67,6 +74,7 @@ const karty=(seznam,od)=>seznam.map(([u,t,p,h],j)=>{const i=od+j;
 document.getElementById('grid').innerHTML=karty(GRAFY,0);
 document.getElementById('grid2').innerHTML=karty(GRAFY2,GRAFY.length);
 document.getElementById('grid3').innerHTML=karty(GRAFY3,GRAFY.length+GRAFY2.length);
+document.getElementById('grid4').innerHTML=karty(GRAFY4,GRAFY.length+GRAFY2.length+GRAFY3.length);
 document.querySelectorAll('.kod button').forEach(b=>b.onclick=()=>{const v=document.getElementById('k'+b.dataset.i);
  (navigator.clipboard?navigator.clipboard.writeText(v.value):Promise.reject()).then(()=>{b.textContent='Zkopírováno'},()=>{v.select();document.execCommand('copy');b.textContent='Zkopírováno'});
  setTimeout(()=>b.textContent='Kopírovat',1800)});

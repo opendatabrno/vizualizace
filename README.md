@@ -5,7 +5,7 @@ témata (obyvatelé, cizinci, žáci), profil každé obce, metodika a grafy k v
 Cílová skupina jsou obce, odborná veřejnost a hackathony na data.brno.cz.
 
 - **Web:** https://opendatabrno.github.io/vizualizace/
-- **Datové sady:** [obyvatelé](https://github.com/opendatabrno/obyvatele) · [cizinci](https://github.com/opendatabrno/cizinci) · [žáci](https://github.com/opendatabrno/zaci)
+- **Datové sady:** [obyvatelé](https://github.com/opendatabrno/obyvatele) · [cizinci](https://github.com/opendatabrno/cizinci) · [žáci](https://github.com/opendatabrno/zaci) · [subjekty](https://github.com/opendatabrno/subjekty)
 
 Data v repozitáři nejsou: při každém nasazení se stáhnou hotové datové sady a připraví se z nich
 malé soubory pro stránky.
@@ -18,7 +18,8 @@ malé soubory pro stránky.
 | `obyvatele/` | téma Obyvatelé: mapa obcí, žebříčky, městské části |
 | `cizinci/` | téma Cizinci: měsíční vývoj, státy, okresy |
 | `zaci/` | téma Žáci: děti a žáci ve školách obcí za ČR, částka na žáka, žebříček obcí |
-| `obec/?kod=582786` | profil obce: vývoj, srovnání s okresem, krajem a podobnými obcemi, pořadí, složení, cizinci v okrese, školy zřizované obcí, MV × ČSÚ, městské části, kód pro vložení |
+| `subjekty/` | téma Subjekty: veřejný rejstřík od 1990, všechny subjekty včetně OSVČ (RES), obory, mapa, žebříček obcí |
+| `obec/?kod=582786` | profil obce: vývoj, srovnání s okresem, krajem a podobnými obcemi, pořadí, složení, cizinci v okrese, školy zřizované obcí, ekonomické subjekty, MV × ČSÚ, městské části, kód pro vložení |
 | `metodika/` | datové sady ke stažení, pojmy, které číslo použít, zlomy, aktualizace, adresy pro vývojáře, citace |
 | `vlozit/` | galerie grafů s kódem pro vložení (iframe) |
 | `data/obce/{kod}.json` | všechny řady jedné obce (statické API) |
@@ -35,7 +36,16 @@ malé soubory pro stránky.
    `spolecne/moduly.js`, `spolecne/zaklad.js` a zavolá `Z.hlavicka('id')`).
 3. Data připrav v `scripts/build_data.py`; pokud má téma klíčové číslo na úvod, přidej ho do `data/souhrn.json`
    a do funkce `souhrn` v položce modulu.
-4. Přepni `stav` na `'hotovo'`. Nasazení (`pages.yml`) kopíruje všechny složky, upravovat ho netřeba.
+4. Přepni `stav` na `'hotovo'` a přidej id do `ZAPNUTO`. Nasazení (`pages.yml`) kopíruje všechny složky, upravovat ho netřeba.
+5. Prvky jiných stránek, které k tématu patří (řádky v metodice, sekce v grafech k vložení), označ
+   atributem `data-modul="id"`. Sekce v profilu obce a načítání dat podmiň `Z.zapnuto('id')`.
+
+### Vypnutí tématu
+
+Na začátku [`spolecne/moduly.js`](spolecne/moduly.js) je vypínač `window.ZAPNUTO`. Téma s `false`
+zmizí z navigace, úvodní stránky, profilu obce, metodiky i grafů k vložení, jeho stránka přesměruje na
+úvod a `scripts/build_data.py` jeho data nestahuje. Nic se nemaže, `true` téma vrátí. Obyvatelé jsou
+základ webu (profil obce, mapy), jejich data se sestavují vždy; vypnutím se skryje jen stránka tématu.
 
 Společné funkce (`spolecne/zaklad.js`, objekt `Z`): formátování čísel (`cis`, `pct`, `kratce`),
 načítání dat (`nacti`), hlavička a patička (`hlavicka`), vyhledávání obce (`hledani`), malý graf (`spark`),
@@ -54,6 +64,7 @@ k vložení jako iframe. Starší adresy `obyvatele/?graf=…` a `cizinci/?graf=
 | `obyvatele/graf.html?graf=mesto&mesto=582786` | totéž za městské části 8 statutárních měst |
 | `obyvatele/graf.html?graf=obec&obec=582786` | sloupcový graf jedné obce po letech |
 | `obyvatele/graf.html?graf=zaci` | mapa obcí: změna žáků ZŠ a dětí v MŠ, děti a žáci na 1 000 obyvatel, Kč ze sdílených daní na obyvatele |
+| `obyvatele/graf.html?graf=subjekty` | mapa obcí: ekonomické subjekty, právnické osoby a spolky na 1 000 obyvatel, změna veřejného rejstříku |
 
 ### Parametry v adrese
 
@@ -71,6 +82,7 @@ k vložení jako iframe. Starší adresy `obyvatele/?graf=…` a `cizinci/?graf=
 | `osa=log` | vývoj | logaritmická osa (jen podle států) |
 | `ukazatel=obcane`, `ukazatel=cizinci` | obce, města | změna občanů ČR / podíl cizinců místo změny obyvatel |
 | `ukazatel=ms`, `ukazatel=na1000`, `ukazatel=kc` | žáci | změna dětí v MŠ / na 1 000 obyvatel / Kč na obyvatele místo změny žáků ZŠ |
+| `ukazatel=prav`, `ukazatel=spolky`, `ukazatel=zmena` | subjekty | právnické osoby / spolky na 1 000 obyvatel / změna veřejného rejstříku místo všech subjektů na 1 000 obyvatel |
 | `od=2005`, `do=2026` | obce, města | roky, mezi kterými se počítá změna (výchozí od 2005, data od 2004) |
 | `kraj=CZ064` | obce | přiblíží kraj (kód NUTS) |
 | `obec=582786` | obce, obec | vybraná obec (kód ČSÚ) |

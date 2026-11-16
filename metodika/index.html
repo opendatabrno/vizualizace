@@ -43,15 +43,18 @@ dl.pojmy dt{font-weight:700;margin-top:12px}dl.pojmy dd{margin:2px 0 0;color:var
           <dt>Počet obyvatel ČSÚ</dt><dd>Oficiální počet obyvatel. Přesně změřený je jen ke dni sčítání (naposledy 26. 3. 2021, další 2031), v ostatních letech ho ČSÚ dopočítává ze sčítání a bilance narozených, zemřelých a stěhování. Stěhování přebírá ze změn trvalého pobytu, takže s odstupem od sčítání se může od skutečnosti vzdalovat: za léta 2001–2011 nadhodnotil ČR o 0,4 %, za léta 2011–2021 o 2,0 % (Prahu o 6 %). Data MV byla při Sčítání 2011 nad skutečností o 2,1 %, při Sčítání 2021 o 3,8 %. Zveřejňuje se v květnu za předchozí 1. 1. <a href="https://github.com/opendatabrno/obyvatele/blob/main/analyza/SCITANI.md">Rozbor MV, ČSÚ a sčítání →</a></dd>
           <dt>Odhad ČSÚ (<code>odhad_csu</code>)</dt><dd>Než ČSÚ data zveřejní, odhadujeme jeho počet z dat MV koeficientem obce z posledního známého roku. Mimo roky se zlomem se od roku 2015 liší od pozdějšího čísla ČSÚ v mediánu o 0,04–0,07 %.</dd>
           <dt>Podíl občanů, kteří v obci žijí (<code>koef_obcane</code>)</dt><dd>U městských částí podle Sčítání 2021: kolik občanů z registru v části opravdu bydlí. Pod 1 = víc registrovaných než bydlících (např. Brno-střed 0,74).</dd>
-          <dt>Děti a žáci ve školách obce</dt><dd>Děti v mateřských a žáci v základních školách (včetně přípravných tříd, individuálního vzdělávání a nižšího stupně víceletých gymnázií), které obec zřizuje, stav k 30. 9. Patří obci, která školu zřizuje, ne obci, kde dítě bydlí. Obec bez vlastní školy v datech není.</dd>
-          <dt>Částka na žáka</dt><dd>Kolik obec dostane ze sdílených daní na jedno dítě nebo žáka své školy (od 2018 se tak dělí 9 % sdílených daní, dřív 7 %). Peníze nejsou účelové. Odhad prostředků obce = počet žáků × částka na žáka.</dd>
+          <dt data-modul="zaci">Děti a žáci ve školách obce</dt><dd data-modul="zaci">Děti v mateřských a žáci v základních školách (včetně přípravných tříd, individuálního vzdělávání a nižšího stupně víceletých gymnázií), které obec zřizuje, stav k 30. 9. Patří obci, která školu zřizuje, ne obci, kde dítě bydlí. Obec bez vlastní školy v datech není.</dd>
+          <dt data-modul="zaci">Částka na žáka</dt><dd data-modul="zaci">Kolik obec dostane ze sdílených daní na jedno dítě nebo žáka své školy (od 2018 se tak dělí 9 % sdílených daní, dřív 7 %). Peníze nejsou účelové. Odhad prostředků obce = počet žáků × částka na žáka.</dd>
+          <dt data-modul="subjekty">Ekonomický subjekt (RES)</dt><dd data-modul="subjekty">Každý, kdo má IČO a je v Registru ekonomických subjektů ČSÚ: firmy, živnostníci (OSVČ), spolky, SVJ, obce, příspěvkové organizace a další. Aktivní = nezaniklý, i když nemusí skutečně podnikat. Počítá se v obci, kde má subjekt dnes sídlo.</dd>
+          <dt data-modul="subjekty">Veřejný rejstřík (ARES)</dt><dd data-modul="subjekty">Obchodní, spolkový, nadační rejstřík, rejstřík ústavů, SVJ a obecně prospěšných společností. Neobsahuje živnostníky ani subjekty mimo rejstřík, sahá ale do roku 1990. Aktivní = zapsaný a dosud nevymazaný; výmaz bývá opožděný za koncem činnosti.</dd>
         </dl></section>
 
       <section id="ktere-cislo"><h2>Které číslo použít</h2>
         <div class="strom">
           <div style="--barva:var(--csu)"><b>Přepočet na obyvatele, hustota, srovnání s jinými statistikami</b>Oficiální počet ČSÚ (<code>obyvatele_csu</code>), pro nejnovější rok <code>odhad_csu</code>. Je to standard, se kterým počítají ostatní statistiky, ne „pravda“: přesný je jen v roce sčítání.</div>
           <div style="--barva:var(--obc)"><b>Občané a cizinci, muži a ženy, městské části, nejčerstvější stav</b>Data MV (<code>obyvatele_celkem</code>, <code>obcane_*</code>, <code>cizinci_*</code>). Počítejte s tím, že jsou vyšší než ČSÚ, ve velkých městech až o 10 %.</div>
-          <div style="--barva:var(--ciz)"><b>Odkud cizinci jsou</b>Sada cizinců s povoleným pobytem, jen po okresech a za ČR.</div>
+          <div data-modul="cizinci" style="--barva:var(--ciz)"><b>Odkud cizinci jsou</b>Sada cizinců s povoleným pobytem, jen po okresech a za ČR.</div>
+          <div data-modul="subjekty" style="--barva:var(--sub)"><b>Firmy a podnikání v obci</b>Pro dnešní stav všechny subjekty z RES (<code>subjekty_aktivni</code>, včetně OSVČ), pro vývoj v čase veřejný rejstřík (<code>rejstrik_aktivni</code>, od 1990). RES v obcích je spolehlivý jen v posledním roce.</div>
           <div style="--barva:var(--fg)"><b>Vývoj v čase přes roky 2022/2023</b>Občané ČR (bez vlivu dočasné ochrany), nebo obyvatelé bez dočasné ochrany. Přes rok 2021 pozor na přepočet ČSÚ podle sčítání.</div>
         </div></section>
 
@@ -60,24 +63,29 @@ dl.pojmy dt{font-weight:700;margin-top:12px}dl.pojmy dd{margin:2px 0 0;color:var
           <tr><th>Kdy</th><th>Co se stalo</th><th>Dopad</th></tr>
           <tr><td>2004–2005</td><td>Cizinci se do evidence MV teprve doplňovali</td><td>k 1. 1. 2004 jen 53 tis. cizinců, o rok později 263 tis.; změny na webu proto počítáme od roku 2005</td></tr>
           <tr><td>2004–2006</td><td>Soubory MV bez kódů obcí</td><td>obce jsme přiřadili podle názvu a okresu; městské části jsou v datech od roku 2007 (Praha), resp. 2008 (ostatní města)</td></tr>
-          <tr><td>2009–2011</td><td>Hospodářská krize</td><td>cizinců ubývalo až do konce roku 2011</td></tr>
-          <tr><td>12/2011</td><td>Pravděpodobně změna evidence (MV)</td><td>+30 tis. přechodných pobytů občanů mimo EU za jeden měsíc</td></tr>
+          <tr data-modul="cizinci"><td>2009–2011</td><td>Hospodářská krize</td><td>cizinců ubývalo až do konce roku 2011</td></tr>
+          <tr data-modul="cizinci"><td>12/2011</td><td>Pravděpodobně změna evidence (MV)</td><td>+30 tis. přechodných pobytů občanů mimo EU za jeden měsíc</td></tr>
+          <tr data-modul="subjekty"><td>2014</td><td>Nový občanský zákoník: spolky a SVJ přešly do veřejného rejstříku</td><td>+150 tis. zápisů do rejstříku za jeden rok (sada subjektů)</td></tr>
+          <tr data-modul="subjekty"><td>2016</td><td>Výmaz spolků, které se nepřevedly podle nového zákoníku</td><td>počet spolků v rejstříku klesl (sada subjektů)</td></tr>
           <tr><td>2011</td><td>ČSÚ přepočítal počty podle Sčítání 2011</td><td>počet ČSÚ k 1. 1. 2011 o 46 tis. nižší než dopočet k 31. 12. 2010</td></tr>
           <tr><td>2013</td><td>MV začalo cizince zveřejňovat z jiného zdroje, s rozdělením na trvalý a přechodný pobyt</td><td>cizinců o 45 tis. méně než o rok dřív</td></tr>
-          <tr><td>2018</td><td>Podle počtu žáků se mezi obce dělí 9 % sdílených daní místo 7 %</td><td>částka na žáka +44 % (sada žáků)</td></tr>
+          <tr data-modul="zaci"><td>2018</td><td>Podle počtu žáků se mezi obce dělí 9 % sdílených daní místo 7 %</td><td>částka na žáka +44 % (sada žáků)</td></tr>
           <tr><td>2021</td><td>ČSÚ přepočítal počty podle Sčítání 2021</td><td>počet ČSÚ k 1. 1. 2021 o ~200 tis. nižší než o rok dřív; odhad ČSÚ v tomto roce méně přesný</td></tr>
-          <tr><td>1/2021</td><td>Brexit</td><td>občané Spojeného království patří mezi občany třetích zemí</td></tr>
-          <tr><td>3/2022</td><td>Dočasná ochrana (válka na Ukrajině)</td><td>cizinci s povoleným pobytem +250 tis. za jediný měsíc</td></tr>
+          <tr data-modul="cizinci"><td>1/2021</td><td>Brexit</td><td>občané Spojeného království patří mezi občany třetích zemí</td></tr>
+          <tr data-modul="cizinci"><td>3/2022</td><td>Dočasná ochrana (válka na Ukrajině)</td><td>cizinci s povoleným pobytem +250 tis. za jediný měsíc</td></tr>
           <tr><td>1. 1. 2023</td><td>MV počítá dočasnou ochranu do přechodného pobytu v obcích</td><td>obyvatelé obcí podle MV +~450 tis.; samostatný sloupec <code>cizinci_docasna_ochrana</code></td></tr>
-          <tr><td>3/2023</td><td>Konec neprodloužených dočasných ochran</td><td>−121 tis. cizinců za měsíc</td></tr>
-          <tr><td>2026</td><td>MF uvádí předběžnou částku na „přepočteného žáka“</td><td>částka na žáka pro rok 2026 není srovnatelná s dřívějšími roky (sada žáků)</td></tr>
+          <tr data-modul="subjekty"><td>2023</td><td>ČSÚ hromadně ukončil neaktivní subjekty v RES (únor a březen)</td><td>asi −190 tis. subjektů, RES za ČR klesl z 3,04 na 2,84 mil. (sada subjektů)</td></tr>
+          <tr data-modul="cizinci"><td>3/2023</td><td>Konec neprodloužených dočasných ochran</td><td>−121 tis. cizinců za měsíc</td></tr>
+          <tr data-modul="zaci"><td>2026</td><td>MF uvádí předběžnou částku na „přepočteného žáka“</td><td>částka na žáka pro rok 2026 není srovnatelná s dřívějšími roky (sada žáků)</td></tr>
         </table></div></section>
 
       <section id="aktualizace"><h2>Aktualizace</h2>
         <p>Datové sady se aktualizují automaticky (GitHub Actions): kontrolují zdroje, při změně struktury souboru založí úkol k opravě, jinak připraví nová data ke schválení. Tento web se sestaví z hotových sad každý týden a po každé aktualizaci dat.</p>
         <div class="posuv"><table class="tab"><tr><th>Data</th><th>Kdy přibývají</th></tr>
           <tr><td>Obyvatelé obcí podle MV k 1. 1.</td><td>v lednu</td></tr><tr><td>Oficiální počet obyvatel ČSÚ k 1. 1.</td><td>v květnu</td></tr>
-          <tr><td>Cizinci s povoleným pobytem</td><td>každý měsíc; stav k 31. 12. koncem ledna</td></tr></table></div></section>
+          <tr><td>Cizinci s povoleným pobytem</td><td>každý měsíc; stav k 31. 12. koncem ledna</td></tr>
+          <tr data-modul="zaci"><td>Žáci ve školách obcí k 30. 9.</td><td>jednou ročně (MF zveřejňuje v lednu až červnu)</td></tr>
+          <tr data-modul="subjekty"><td>Ekonomické subjekty (RES, ARES)</td><td>každý měsíc</td></tr></table></div></section>
 
       <section id="vyvojari"><h2>Pro vývojáře a hackathony</h2>
         <p>Data jsou na stabilních adresách, není potřeba nic stahovat z GitHubu ručně ani se registrovat.</p>
@@ -86,6 +94,7 @@ dl.pojmy dt{font-weight:700;margin-top:12px}dl.pojmy dd{margin:2px 0 0;color:var
           <tr><td><code>https://opendatabrno.github.io/obyvatele/obyvatele_obce.csv</code></td><td>obce × rok, všechny sloupce (také <code>.xlsx</code>)</td></tr>
           <tr><td><code>https://opendatabrno.github.io/obyvatele/obyvatele_mestske_casti.csv</code></td><td>městské části × rok</td></tr>
           <tr><td><code>https://opendatabrno.github.io/cizinci/cizinci_okresy.csv</code></td><td>okresy × rok (také <code>cizinci_okresy_staty</code>, <code>cizinci_staty</code>, <code>cizinci_mesicne</code>)</td></tr>
+          <tr data-modul="subjekty"><td><code>https://opendatabrno.github.io/subjekty/subjekty_obce.csv</code></td><td>obce × rok, veřejný rejstřík a RES (také <code>subjekty_mestske_casti</code>, <code>subjekty_nace_okresy</code>)</td></tr>
           <tr><td><code id="u-obec"></code></td><td>jedna obec jako JSON: všechny řady, městské části („statické API“)</td></tr>
           <tr><td><code id="u-seznam"></code></td><td>seznam obcí: kód, název, okres, poslední počet obyvatel</td></tr>
         </table></div>
@@ -119,7 +128,7 @@ document.getElementById('u-obec').textContent = adresa('data/obce/582786.json');
 document.getElementById('u-seznam').textContent = adresa('data/obce.json');
 document.getElementById('u-js').textContent = `const obec = await fetch("${adresa('data/obce/582786.json')}").then(r => r.json());
 console.log(obec.nazev, obec.roky.at(-1), obec.obyvatele.at(-1));`;
-document.getElementById('sady-seznam').innerHTML = MODULY.filter(m => m.stav === 'hotovo').flatMap(m => m.data.map(d => `
+document.getElementById('sady-seznam').innerHTML = MODULY.filter(m => m.stav === 'hotovo' && zapnuto(m.id)).flatMap(m => m.data.map(d => `
   <div class="sada" style="border-top:4px solid ${m.barva}"><div class="stitek">${esc(m.nazev)}</div><h3>${esc(d.nazev)}</h3>
     <p class="pozn" style="margin:0">Zdroj: ${esc(d.zdroj)} · aktualizace: ${esc(d.aktualizace)} · <a href="https://github.com/${d.repo}">${esc(d.repo)}</a> (README s popisem sloupců)</p>
     <div class="soub">${d.soubory.map(([s, p]) => `<span><code>${esc(s)}</code> <span class="mut">${esc(p)}</span></span>

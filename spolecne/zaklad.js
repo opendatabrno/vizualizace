@@ -22,8 +22,11 @@ const nacti = u => cache[u] ??= fetch(KOREN + u, { cache: 'no-cache' }).then(r =
 // stránka, ze které se jde na profil obce: téma (modul) → profil otevře jeho sekci
 let tema = '';
 function hlavicka(aktivni) {
+  // vypnuté téma: jeho stránka odkáže na úvod, prvky s data-modul="id" zmizí ze všech stránek
+  if (MODULY.some(m => m.id === aktivni) && !zapnuto(aktivni)) { location.replace(KOREN); return }
+  document.querySelectorAll('[data-modul]').forEach(e => zapnuto(e.dataset.modul) || e.remove());
   tema = MODULY.some(m => m.id === aktivni) ? aktivni : aktivni === 'obec' ? null : '';
-  const odkazy = [...MODULY.filter(m => m.stav === 'hotovo'), ...STRANKY];
+  const odkazy = [...MODULY.filter(m => m.stav === 'hotovo' && zapnuto(m.id)), ...STRANKY];
   const h = document.createElement('header');
   h.className = 'hlav';
   h.innerHTML = `<div class="obal"><a class="znak" href="${KOREN}"><i></i>Obyvatelé ČR v datech</a>
@@ -114,5 +117,5 @@ function nabeh(el, cil, ms = 900) {
 // první rok, od kterého se počítají změny: v roce 2004 ještě nejsou v evidenci MV všichni cizinci
 const OD = 2005;
 
-window.Z = { OD, KOREN, Q, cis, pct, rozdil, kratce, esc, bezDiakritiky, znamenko, pekne, nacti, hlavicka, hledani, odkazObce, spark, tip, nabeh };
+window.Z = { OD, KOREN, zapnuto: id => zapnuto(id), Q, cis, pct, rozdil, kratce, esc, bezDiakritiky, znamenko, pekne, nacti, hlavicka, hledani, odkazObce, spark, tip, nabeh };
 })();

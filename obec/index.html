@@ -43,7 +43,7 @@ const tridaNazev = ([a, b]) => b >= 1e9 ? `obce nad ${cis(a)} obyvatel` : a === 
 const median = a => { const s = a.filter(x => x != null && isFinite(x)).sort((x, y) => x - y); if (!s.length) return null; const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2 };
 const sklon = (n, a, b, c) => n === 1 ? a : n >= 2 && n <= 4 ? b : c;
 
-if (!kod) vyberObce(); else Promise.all([Z.nacti(`data/obce/${kod}.json`), Z.nacti('obyvatele/obce.json'), Z.nacti('cizinci/mapa.json').catch(() => null)])
+if (!kod) vyberObce(); else Promise.all([Z.nacti(`data/obce/${kod}.json`), Z.nacti('obyvatele/obce.json'), Z.zapnuto('cizinci') ? Z.nacti('cizinci/mapa.json').catch(() => null) : null])
   .then(([O, V, C]) => profil(O, V, C)).catch(e => { console.error(e); vyberObce(`Obec s kódem ${esc(kod)} jsme nenašli.`) });
 
 function vyberObce(chyba) {
@@ -93,7 +93,7 @@ function profil(O, V, C) {
     <div class="tlacitka netisk"><button class="tl" id="sdilet">Sdílet odkaz</button><button class="tl" onclick="print()">Tisk / PDF</button>
     <a class="tl" href="#vlozit">Vložit na web</a></div></div></section>
   <p class="lead">${text}</p>
-  <nav class="temata netisk" aria-label="Sekce profilu">${MODULY.filter(m => m.stav === 'hotovo').map(m => `<a href="#${m.id}" style="--barva:${m.barva}">${esc(m.nazev)}</a>`).join('')}</nav>
+  <nav class="temata netisk" aria-label="Sekce profilu">${MODULY.filter(m => m.stav === 'hotovo' && Z.zapnuto(m.id)).map(m => `<a href="#${m.id}" style="--barva:${m.barva}">${esc(m.nazev)}</a>`).join('')}</nav>
   <div class="dlazdice">
     ${dl(cis(ob[n]), `obyvatel k 1. 1. ${R[n]} (MV)`, `<span class="${znamenko(meziRok)}">${rozdil(meziRok)}</span> za poslední rok`)}
     ${dl(`<span class="${znamenko(zmena)}">${pct(zmena)}</span>`, `změna od roku ${rok0}`, `okres ${pct(okresZm)} · ČR ${pct(crZm)}`)}
@@ -135,11 +135,18 @@ function profil(O, V, C) {
   <p class="uvod">Odkud cizinci pocházejí, uvádí MV jen za okresy (cizinci s povoleným pobytem k 31. 12.). <a href="../cizinci/">Více v tématu Cizinci →</a></p>
   <div class="dve" id="ciz-okres"></div>` : ''}
 
-  <h2 id="zaci">Školy zřizované obcí</h2>
+  ${Z.zapnuto('zaci') ? `<h2 id="zaci">Školy zřizované obcí</h2>
   ${O.zaci ? `<p class="uvod">Děti v mateřských a žáci v základních školách, které obec zřizuje, vždy k 30. 9. Patří sem i děti z okolních obcí, které do škol obce dojíždějí. <a href="../zaci/">Více v tématu Žáci →</a></p>
   <div class="dlazdice" id="zaci-klic"></div>
   <div class="legenda" style="margin-top:14px"><span><i style="background:var(--csu)"></i>mateřské školy</span><span><i style="background:var(--zak)"></i>základní školy</span><span><i style="background:var(--mut)"></i>ostatní</span></div>
-  <div id="g-zaci"></div>` : `<p class="uvod">Obec v datech Ministerstva financí (2014–2024) není, takže sama nezřizuje mateřskou ani základní školu. Školu může mít společně s okolními obcemi ve svazku obcí (svazky jsou v datech zvlášť, bez rozdělení na obce), jinak děti chodí do škol jiných obcí nebo jiných zřizovatelů. <a href="../zaci/">Téma Žáci →</a></p>`}
+  <div id="g-zaci"></div>` : `<p class="uvod">Obec v datech Ministerstva financí (2014–2024) není, takže sama nezřizuje mateřskou ani základní školu. Školu může mít společně s okolními obcemi ve svazku obcí (svazky jsou v datech zvlášť, bez rozdělení na obce), jinak děti chodí do škol jiných obcí nebo jiných zřizovatelů. <a href="../zaci/">Téma Žáci →</a></p>`}` : ''}
+
+  ${Z.zapnuto('subjekty') && O.subjekty ? `<h2 id="subjekty">Ekonomické subjekty se sídlem v obci</h2>
+  <p class="uvod">Firmy, živnostníci, spolky, SVJ, obec a další subjekty, které mají sídlo v obci. Sídlo nemusí být místo podnikání. <a href="../subjekty/">Více v tématu Subjekty →</a></p>
+  <div class="dlazdice" id="subj-klic"></div>
+  <div class="dve" style="margin-top:14px"><div class="blok"><h3>Právnické osoby podle formy</h3><div id="subj-formy"></div></div>
+  <div class="blok"><h3>Veřejný rejstřík po letech</h3><div class="legenda"><span><i style="background:var(--sub)"></i>s.r.o.</span><span><i style="background:var(--mut)"></i>ostatní (spolky, SVJ, a. s., družstva…)</span></div><div id="g-subj"></div>
+  <p class="pozn">Subjekty zapsané ve veřejném rejstříku k 31. 12. (bez živnostníků) podle dnešního sídla. Skok v roce 2014: do rejstříku přešly spolky a SVJ.</p></div></div>` : ''}
 
   <h2>Registr MV a oficiální počet ČSÚ</h2>
   <div class="blok" id="mv-csu"></div>
@@ -212,9 +219,10 @@ function profil(O, V, C) {
   }
 
   // školy zřizované obcí
-  if (O.zaci) grafZaci(O);
+  if (O.zaci && Z.zapnuto('zaci')) grafZaci(O);
+  if (O.subjekty && Z.zapnuto('subjekty')) grafSubjekty(O);
 
-  // příchod z tématu (#obyvatele, #cizinci, #zaci): obsah vzniká až teď, proto se na sekci posune ručně
+  // příchod z tématu (#obyvatele, #cizinci, #zaci, #subjekty): obsah vzniká až teď, proto se na sekci posune ručně
   document.querySelectorAll('.temata a').forEach(a => document.getElementById(a.hash.slice(1)) || a.remove());
   const cil = location.hash && document.getElementById(location.hash.slice(1));
   if (cil) { cil.scrollIntoView(); setTimeout(() => cil.scrollIntoView(), 300) }   // podruhé po načtení písma a grafů
@@ -240,6 +248,39 @@ function profil(O, V, C) {
       mc.map(m => { const p0 = m.obyvatele[jm] || m.obyvatele.find(v => v); const z = m.obyvatele[n] / p0 - 1;
         return `<tr><td><a href="../obyvatele/graf.html?graf=mesto&mesto=${O.kod}&mc=${m.kod}">${esc(m.nazev)}</a></td><td class="c">${cis(m.obyvatele[n])}</td><td class="c ${znamenko(z)}">${pct(z)}</td><td class="c">${cis(m.odhad_csu[n])}</td><td class="c">${m.koef_obcane == null ? '–' : pct(m.koef_obcane, false, 0)}</td></tr>` }).join('');
   }
+}
+
+/* ekonomické subjekty: RES (ČSÚ) v posledním roce, veřejný rejstřík (ARES) po letech */
+function grafSubjekty(O) {
+  const S = O.subjekty, R = S.roky, n = R.length - 1, den = s => s ? new Date(s).toLocaleDateString('cs-CZ') : '';
+  const res = S.res.at(-1), obyv = O.obyvatele.at(-1), i14 = R.indexOf(2014);
+  const dl = (h, p, z) => `<div class="dl"><div class="h">${h}</div><div class="p">${p}</div>${z ? `<div class="z">${z}</div>` : ''}</div>`;
+  $('subj-klic').innerHTML = [
+    dl(cis(res), `ekonomických subjektů k ${den(S.stav.res)}`, 'všechny aktivní subjekty v RES včetně OSVČ'),
+    dl(obyv ? cis(Math.round(res / obyv * 1000)) : '–', 'subjektů na 1 000 obyvatel', obyv ? `obyvatelé MV k 1. 1. ${O.roky.at(-1)}` : ''),
+    dl(cis(S.fyzicke), 'fyzických osob (hlavně OSVČ)', ''),
+    dl(cis(S.pravnicke), 'právnických osob', ''),
+    dl(cis(S.vznikle), `subjektů vzniklo v roce ${S.roky_res.at(-1)}`, `zaniklo ${cis(S.zanikle)}`),
+  ].join('');
+  const formy = [['s.r.o.', S.sro], ['akciové společnosti', S.as], ['družstva', S.druzstva], ['spolky', S.spolky], ['SVJ', S.svj], ['ostatní', S.ostatni]];
+  const mxF = Math.max(...formy.map(f => f[1] || 0), 1);
+  $('subj-formy').innerHTML = formy.map(([t, v]) => `<div style="display:grid;grid-template-columns:9em 1fr 4.5em;gap:8px;align-items:center;font-size:15px;margin:3px 0"><span>${t}</span>
+    <span style="height:12px;border-radius:2px;background:var(--sub);width:${(v || 0) / mxF * 100}%"></span><span class="cisla" style="text-align:right">${cis(v)}</span></div>`).join('') +
+    `<p class="pozn">Právnické osoby v RES k ${den(S.stav.res)}.</p>`;
+  const W = 600, H = 220, ml = 50, mr = 6, mt = 10, mb = 24, mx0 = Math.max(...S.rejstrik.filter(v => v != null), 1) * 1.08;
+  const krok = Z.pekne(mx0 / 4), mx = Math.ceil(mx0 / krok) * krok, y = v => mt + (1 - v / mx) * (H - mt - mb), sl = (W - ml - mr) / R.length, bw = sl * .74;
+  let s = `<svg class="graf" viewBox="0 0 ${W} ${H}" role="img" aria-label="Subjekty ve veřejném rejstříku">`;
+  for (let v = 0; v <= mx + 1e-9; v += krok) s += `<line class="mr" x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}"/><text class="osa" x="${ml - 6}" y="${y(v) + 4}" text-anchor="end">${Z.kratce(v)}</text>`;
+  R.forEach((r, j) => {
+    const x = ml + j * sl + (sl - bw) / 2, sro = S.rejstrik_sro[j] || 0, vse = S.rejstrik[j] || 0;
+    s += `<g class="sl" data-j="${j}"><rect x="${ml + j * sl}" y="${mt}" width="${sl}" height="${H - mt - mb}" fill="transparent"/>
+      <rect x="${x}" y="${y(sro)}" width="${bw}" height="${y(0) - y(sro)}" fill="var(--sub)"/><rect x="${x}" y="${y(vse)}" width="${bw}" height="${y(sro) - y(vse)}" fill="var(--mut)"/>
+      ${r % 5 === 0 || j === n ? `<text class="osa" x="${x + bw / 2}" y="${H - 7}" text-anchor="middle">${r}</text>` : ''}</g>`;
+  });
+  $('g-subj').innerHTML = s + '</svg>';
+  $('g-subj').onmousemove = e => { const g = e.target.closest('.sl'); if (!g) return Z.tip(e, ''); const j = +g.dataset.j;
+    Z.tip(e, `<b>${j === n ? den(S.stav.ares) : '31. 12. ' + R[j]}</b><br>ve veřejném rejstříku: ${cis(S.rejstrik[j])}<br>z toho s.r.o.: ${cis(S.rejstrik_sro[j])}${i14 >= 0 && j > i14 && S.rejstrik[i14] ? `<br>změna od 2014: ${pct(S.rejstrik[j] / S.rejstrik[i14] - 1)}` : ''}`) };
+  $('g-subj').onmouseleave = e => Z.tip(e, '');
 }
 
 /* děti a žáci ve školách obce: dlaždice a skládaný sloupcový graf */
