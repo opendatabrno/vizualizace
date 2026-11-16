@@ -291,10 +291,11 @@ function mapa(D,H,K){
 
 /* ================= MĚSTSKÉ ČÁSTI ================= */
 function mesto(D,H){
- const roky=D.roky,ctl=$('ctl'),N=roky.length,mesta=Object.keys(D.mesta).filter(k=>H.mesta[k]).sort((x,y)=>D.mesta[x].nazev.localeCompare(D.mesta[y].nazev,'cs'));
+ // výchozí rok 2008: v souboru MV za rok 2007 jsou městské části jen za Prahu, ostatní města by byla prázdná
+ const roky=D.roky,ctl=$('ctl'),N=roky.length,a0=Math.max(0,roky.indexOf(2008)),mesta=Object.keys(D.mesta).filter(k=>H.mesta[k]).sort((x,y)=>D.mesta[x].nazev.localeCompare(D.mesta[y].nazev,'cs'));
  let m=D.mesta[Q.get('mesto')]?Q.get('mesto'):'582786';
  let uk=UKAZATELE.some(u=>u[0]===Q.get('ukazatel'))?Q.get('ukazatel'):'zmena';
- let a=Math.max(0,roky.indexOf(+Q.get('od'))),b=roky.indexOf(+Q.get('do'));if(b<0)b=N-1;if(a>=b)a=0;
+ let a=roky.indexOf(+Q.get('od'));if(a<0)a=a0;let b=roky.indexOf(+Q.get('do'));if(b<0)b=N-1;if(a>=b)a=Math.min(a0,b-1);
  let vyb=Q.get('mc');
  $('foot').innerHTML=ZDROJ+'; hranice '+esc(H.zdroj)+'.';
  vyber(ctl,'',mesta.map(k=>[k,D.mesta[k].nazev]),m,v=>{m=v;vyb=null;kresli()});
@@ -330,7 +331,7 @@ function mesto(D,H){
   $('detail').innerHTML=`<h2>${esc(r[0])}</h2><div class="kraj">${esc(M.nazev)}</div><div class="velke">${pct(hodnota(uk,rr(r),a,b),uk!=='cizinci')}</div>
    <p class="pozn">${esc(textUkazatele(uk,roky[a],roky[b]))}<br>${cis(r[1][b])} obyvatel k 1. 1. ${roky[b]}, z toho ${cis(r[2][b])} cizinců</p>
    <h3>Obyvatelé ${roky[0]}–${roky[N-1]}</h3>${graf(roky,r[1],r[2])}<details><summary class="zpet">Tabulka po letech</summary>${tabulka(roky,r[1],r[2])}</details>`;
-  nastavUrl({mesto:m,mc:vyb,ukazatel:uk==='zmena'?null:uk,od:uk==='cizinci'||a===0?null:roky[a],do:b===N-1?null:roky[b]})}
+  nastavUrl({mesto:m,mc:vyb,ukazatel:uk==='zmena'?null:uk,od:uk==='cizinci'||a===a0?null:roky[a],do:b===N-1?null:roky[b]})}
  kresli();
 }
 
