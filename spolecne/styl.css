@@ -1,5 +1,5 @@
 /* Společný vzhled stránek webu (rozcestník, moduly, profil obce, metodika).
-   Grafy k vložení (*/graf.html) mají vlastní styl, aby fungovaly samostatně v iframe. */
+   Grafy k vložení (obyvatele/graf.html, cizinci/graf.html) mají vlastní styl, aby fungovaly samostatně v iframe. */
 :root{--bg:#fff;--fg:#1c1c1c;--mut:#5a5a5a;--soft:#f3f3f3;--soft2:#e9eded;--line:#d6d6d6;--grid:#ececec;
  --acc:#2f7f86;--acc2:#1d6870;--obc:#2f7f86;--ciz:#e8891d;--do:#c2410c;--csu:#6d3fb0;--plus:#2b8c88;--minus:#c6501a;
  --stin:0 1px 2px rgba(0,0,0,.06),0 6px 20px rgba(0,0,0,.05);color-scheme:light}
