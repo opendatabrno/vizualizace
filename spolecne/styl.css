@@ -1,0 +1,92 @@
+/* Společný vzhled stránek webu (rozcestník, moduly, profil obce, metodika).
+   Grafy k vložení (*/graf.html) mají vlastní styl, aby fungovaly samostatně v iframe. */
+:root{--bg:#fff;--fg:#1c1c1c;--mut:#5a5a5a;--soft:#f3f3f3;--soft2:#e9eded;--line:#d6d6d6;--grid:#ececec;
+ --acc:#2f7f86;--acc2:#1d6870;--obc:#2f7f86;--ciz:#e8891d;--do:#c2410c;--csu:#6d3fb0;--plus:#2b8c88;--minus:#c6501a;
+ --stin:0 1px 2px rgba(0,0,0,.06),0 6px 20px rgba(0,0,0,.05);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-tema="svetle"]){--bg:#141718;--fg:#e9ecec;--mut:#a7b0b1;--soft:#1f2425;--soft2:#262c2d;--line:#384042;--grid:#262c2d;
+ --acc:#6cc3c4;--acc2:#8fd6d4;--obc:#56ada9;--ciz:#f0a04b;--do:#f08a4b;--csu:#b493e8;--plus:#56ada9;--minus:#f08a4b;--stin:none;color-scheme:dark}}
+:root[data-tema="tmave"]{--bg:#141718;--fg:#e9ecec;--mut:#a7b0b1;--soft:#1f2425;--soft2:#262c2d;--line:#384042;--grid:#262c2d;
+ --acc:#6cc3c4;--acc2:#8fd6d4;--obc:#56ada9;--ciz:#f0a04b;--do:#f08a4b;--csu:#b493e8;--plus:#56ada9;--minus:#f08a4b;--stin:none;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:16px/1.5 "IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;-webkit-text-size-adjust:100%}
+a{color:var(--acc)}a:hover{color:var(--acc2)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.obal{max-width:1180px;margin:0 auto;padding:0 16px}
+h1,h2,h3{line-height:1.15;margin:0}
+h1{font-size:clamp(30px,5.6vw,52px);text-transform:uppercase;letter-spacing:.01em}
+h2{font-size:clamp(20px,3vw,26px);text-transform:uppercase;margin:44px 0 6px}
+h2+.uvod{margin-top:0}
+.uvod{color:var(--mut);max-width:760px;margin:6px 0 18px}
+.stitek{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600}
+.mut{color:var(--mut)}.cisla{font-variant-numeric:tabular-nums}
+
+/* hlavička a navigace */
+.hlav{border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:20}
+.hlav .obal{display:flex;align-items:center;gap:6px 18px;flex-wrap:wrap;min-height:56px;padding-top:6px;padding-bottom:6px}
+.znak{font-weight:700;text-transform:uppercase;text-decoration:none;color:var(--fg);letter-spacing:.02em;display:flex;align-items:center;gap:8px;margin-right:auto}
+.znak i{width:22px;height:22px;border-radius:4px;background:conic-gradient(var(--obc) 0 50%,var(--ciz) 0 75%,var(--csu) 0);display:block}
+.nav{display:flex;gap:2px;flex-wrap:wrap}
+.nav a{text-decoration:none;color:var(--fg);padding:7px 11px;border-radius:4px;font-size:15px}
+.nav a:hover{background:var(--soft)}.nav a[aria-current="page"]{background:var(--fg);color:var(--bg)}
+.nav a .t{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:1px}
+.paticka{border-top:1px solid var(--line);margin-top:56px;padding:22px 0 34px;color:var(--mut);font-size:14px}
+.paticka .obal{display:flex;flex-wrap:wrap;gap:8px 28px;justify-content:space-between}
+
+/* tlačítka, vyhledávání */
+.tl{font:inherit;font-size:15px;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--fg);cursor:pointer;text-decoration:none}
+.tl:hover{background:var(--soft);color:var(--fg)}.tl.hl{background:var(--acc);border-color:var(--acc);color:var(--bg)}.tl.hl:hover{background:var(--acc2)}
+.tlacitka{display:flex;gap:8px;flex-wrap:wrap}
+.hledej{position:relative;max-width:560px}
+.hledej input{width:100%;font:inherit;font-size:18px;padding:14px 16px 14px 44px;border:2px solid var(--fg);border-radius:6px;background:var(--bg);color:var(--fg)}
+.hledej svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:20px;height:20px;stroke:var(--mut);fill:none;stroke-width:2}
+.hledej ul{position:absolute;left:0;right:0;top:calc(100% + 4px);margin:0;padding:4px;list-style:none;background:var(--bg);border:1px solid var(--line);border-radius:6px;box-shadow:var(--stin);z-index:30;max-height:360px;overflow:auto}
+.hledej ul:empty{display:none}
+.hledej li{padding:8px 10px;border-radius:4px;cursor:pointer;display:flex;justify-content:space-between;gap:12px}
+.hledej li[aria-selected="true"],.hledej li:hover{background:var(--soft)}
+.hledej li small{color:var(--mut);white-space:nowrap}
+.hledej.male input{font-size:15px;padding:9px 12px 9px 36px;border-width:1px}.hledej.male svg{left:11px;width:16px;height:16px}
+
+/* karty modulů a dlaždice */
+.mrizka{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))}
+.modul{position:relative;border:1px solid var(--line);border-radius:8px;padding:20px 20px 18px;display:flex;flex-direction:column;gap:10px;background:var(--bg);box-shadow:var(--stin);overflow:hidden;text-decoration:none;color:var(--fg);transition:transform .15s,border-color .15s}
+.modul:hover{transform:translateY(-2px);border-color:var(--barva,var(--acc));color:var(--fg)}
+.modul::before{content:"";position:absolute;left:0;top:0;right:0;height:4px;background:var(--barva,var(--acc))}
+.modul h3{font-size:24px;text-transform:uppercase}.modul p{margin:0;color:var(--mut);font-size:15px}
+.modul .cislo{font-size:34px;font-weight:700;line-height:1}.modul .cislo small{font-size:14px;font-weight:400;color:var(--mut);display:block;margin-top:4px}
+.modul .dal{margin-top:auto;font-weight:600;color:var(--barva,var(--acc))}
+.modul.pripravujeme{opacity:.7;box-shadow:none;border-style:dashed}.modul.pripravujeme:hover{transform:none}
+.spark{width:100%;height:46px;display:block}
+.dlazdice{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr))}
+.dl{background:var(--soft);border-radius:6px;padding:14px 16px}
+.dl .h{font-size:30px;font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums}
+.dl .p{font-size:13.5px;color:var(--mut);margin-top:4px}
+.dl .z{font-size:14px;font-weight:600;margin-top:6px}
+.plus{color:var(--plus)}.minus{color:var(--minus)}
+
+/* obsahové bloky */
+.blok{border:1px solid var(--line);border-radius:8px;padding:18px 18px 14px;margin-top:16px}
+.blok h3{font-size:17px;text-transform:uppercase;margin-bottom:4px}
+.dve{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+.rama{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg)}
+.rama iframe{display:block;width:100%;border:0}
+.pozn{font-size:14px;color:var(--mut)}
+.info{padding:10px 14px;background:var(--soft);border-left:3px solid var(--acc);border-radius:0 4px 4px 0;font-size:15px;margin:14px 0}
+.tab{width:100%;border-collapse:collapse;font-size:15px}
+.tab th,.tab td{padding:7px 8px;border-bottom:1px solid var(--grid);text-align:left;vertical-align:top}
+.tab th{font-size:13px;text-transform:uppercase;color:var(--mut);font-weight:600}
+.tab td.c,.tab th.c{text-align:right;font-variant-numeric:tabular-nums}
+.tab tr.on td{font-weight:700;background:var(--soft)}
+.posuv{overflow-x:auto}
+code{font:14px ui-monospace,Consolas,monospace;background:var(--soft);padding:1px 5px;border-radius:3px}
+.legenda{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:14px;color:var(--mut);margin:6px 0}
+.legenda i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+svg.graf{display:block;width:100%;height:auto;font-family:inherit;overflow:visible}
+svg.graf .osa{font-size:12px;fill:var(--mut)}svg.graf .mr{stroke:var(--grid)}
+.tip{position:fixed;pointer-events:none;background:var(--fg);color:var(--bg);padding:6px 9px;border-radius:4px;font-size:13.5px;z-index:50;max-width:280px;line-height:1.35;display:none}
+.prepinac{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.prepinac button{font:inherit;font-size:14px;padding:6px 12px;border:0;background:var(--bg);color:var(--fg);cursor:pointer}
+.prepinac button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.ovl{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center;margin:8px 0 12px}
+.ovl select{font:inherit;font-size:14px;padding:6px 10px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--fg)}
+@media print{.hlav,.paticka,.netisk{display:none!important}body{font-size:13px}.blok,.modul{break-inside:avoid;box-shadow:none}h2{margin-top:22px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="cs"><head><meta charset="utf-8"><title>Data a metodika · Obyvatelé ČR v datech</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Datové sady ke stažení, význam čísel, které číslo kdy použít, zlomy v datech a adresy pro vývojáře.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+.zahl{padding:30px 0 4px}
+.obsah-str{display:grid;grid-template-columns:220px minmax(0,1fr);gap:36px;align-items:start}
+@media (max-width:860px){.obsah-str{grid-template-columns:1fr}.toc{position:static!important}}
+.toc{position:sticky;top:74px;font-size:15px;border-left:2px solid var(--line);padding-left:14px}
+.toc a{display:block;padding:4px 0;color:var(--mut);text-decoration:none}.toc a:hover{color:var(--fg)}
+section{scroll-margin-top:70px}
+.sada{border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin:12px 0}
+.sada h3{font-size:19px;margin-bottom:4px}
+.sada .soub{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;margin-top:10px;font-size:15px;align-items:center}
+.strom{display:grid;gap:10px}
+.strom div{border-left:4px solid var(--barva);background:var(--soft);padding:10px 14px;border-radius:0 6px 6px 0}
+.strom b{display:block}
+pre{background:var(--soft);border-radius:6px;padding:12px 14px;overflow-x:auto;font:13.5px/1.5 ui-monospace,Consolas,monospace}
+dl.pojmy dt{font-weight:700;margin-top:12px}dl.pojmy dd{margin:2px 0 0;color:var(--mut)}
+</style></head><body>
+<main class="obal">
+  <section class="zahl"><div class="stitek">Data a metodika</div><h1>Jak data vznikají a jak je číst</h1>
+    <p class="uvod">Všechna čísla na webu pocházejí z otevřených datových sad <a href="https://github.com/opendatabrno">opendatabrno</a>,
+      které skládají a kontrolují zveřejněné soubory Ministerstva vnitra a ČSÚ. Podrobný popis zpracování je v README každé sady na GitHubu.</p></section>
+
+  <div class="obsah-str">
+    <nav class="toc netisk" aria-label="Obsah stránky"><a href="#sady">Datové sady</a><a href="#pojmy">Pojmy</a><a href="#ktere-cislo">Které číslo použít</a>
+      <a href="#zlomy">Zlomy v datech</a><a href="#aktualizace">Aktualizace</a><a href="#vyvojari">Pro vývojáře a hackathony</a><a href="#citace">Citace a licence</a></nav>
+    <div>
+      <section id="sady"><h2 style="margin-top:0">Datové sady</h2>
+        <p class="uvod">Každé téma stojí na jedné datové sadě. CSV v UTF-8 (s BOM pro Excel), oddělovač čárka; stejná data i jako Excel.</p>
+        <div id="sady-seznam"></div></section>
+
+      <section id="pojmy"><h2>Pojmy</h2>
+        <dl class="pojmy">
+          <dt>Obyvatelé podle MV (informativní počet obyvatel)</dt><dd>Občané ČR s trvalým pobytem v obci + cizinci s trvalým nebo přechodným pobytem (nad 90 dní), stav k 1. 1. Výpis z registru obyvatel a cizineckého informačního systému.</dd>
+          <dt>Občané ČR</dt><dd>Lidé s českým občanstvím a trvalým pobytem v obci. Patří sem i lidé, kteří v obci nežijí (trvalý pobyt na adrese úřadu, žijící v zahraničí).</dd>
+          <dt>Cizinci s povoleným pobytem</dt><dd>Cizinci s trvalým pobytem nebo s přechodným pobytem nad 90 dní (u občanů EU přechodný pobyt, u ostatních dlouhodobé vízum a pobyt). Od roku 2022 včetně dočasné ochrany.</dd>
+          <dt>Dočasná ochrana</dt><dd>Pobytové oprávnění pro lidi prchající před válkou na Ukrajině (od března 2022). V sadě obyvatel je od roku 2023 jako samostatný sloupec, je součástí přechodného pobytu.</dd>
+          <dt>Počet obyvatel ČSÚ</dt><dd>Oficiální počet obyvatel podle Sčítání 2021 a bilance narozených, zemřelých a stěhování. Zveřejňuje se v květnu za předchozí 1. 1.</dd>
+          <dt>Odhad ČSÚ (<code>odhad_csu</code>)</dt><dd>Než ČSÚ data zveřejní, odhadujeme jeho počet z dat MV koeficientem obce z posledního známého roku. Mimo roky se zlomem se od pozdějšího čísla ČSÚ liší v mediánu o 0,04–0,07 %.</dd>
+          <dt>Podíl občanů, kteří v obci žijí (<code>koef_obcane</code>)</dt><dd>U městských částí podle Sčítání 2021: kolik občanů z registru v části opravdu bydlí. Pod 1 = víc registrovaných než bydlících (např. Brno-střed 0,74).</dd>
+        </dl></section>
+
+      <section id="ktere-cislo"><h2>Které číslo použít</h2>
+        <div class="strom">
+          <div style="--barva:var(--csu)"><b>Přepočet na obyvatele, hustota, srovnání s jinými statistikami</b>Oficiální počet ČSÚ (<code>obyvatele_csu</code>), pro nejnovější rok <code>odhad_csu</code>.</div>
+          <div style="--barva:var(--obc)"><b>Občané a cizinci, muži a ženy, městské části, nejčerstvější stav</b>Data MV (<code>obyvatele_celkem</code>, <code>obcane_*</code>, <code>cizinci_*</code>). Počítejte s tím, že jsou vyšší než ČSÚ, ve velkých městech až o 10 %.</div>
+          <div style="--barva:var(--ciz)"><b>Odkud cizinci jsou</b>Sada cizinců s povoleným pobytem, jen po okresech a za ČR.</div>
+          <div style="--barva:var(--fg)"><b>Vývoj v čase přes roky 2022/2023</b>Občané ČR (bez vlivu dočasné ochrany), nebo obyvatelé bez dočasné ochrany. Přes rok 2021 pozor na přepočet ČSÚ podle sčítání.</div>
+        </div></section>
+
+      <section id="zlomy"><h2>Zlomy v datech</h2>
+        <div class="posuv"><table class="tab">
+          <tr><th>Kdy</th><th>Co se stalo</th><th>Dopad</th></tr>
+          <tr><td>2009–2011</td><td>Hospodářská krize</td><td>cizinců ubývalo až do konce roku 2011</td></tr>
+          <tr><td>12/2011</td><td>Pravděpodobně změna evidence (MV)</td><td>+30 tis. přechodných pobytů občanů mimo EU za jeden měsíc</td></tr>
+          <tr><td>2021</td><td>ČSÚ přepočítal počty podle Sčítání 2021</td><td>počet ČSÚ k 1. 1. 2021 o ~200 tis. nižší než o rok dřív; odhad ČSÚ v tomto roce méně přesný</td></tr>
+          <tr><td>1/2021</td><td>Brexit</td><td>občané Spojeného království patří mezi občany třetích zemí</td></tr>
+          <tr><td>3/2022</td><td>Dočasná ochrana (válka na Ukrajině)</td><td>cizinci s povoleným pobytem +250 tis. za jediný měsíc</td></tr>
+          <tr><td>1. 1. 2023</td><td>MV počítá dočasnou ochranu do přechodného pobytu v obcích</td><td>obyvatelé obcí podle MV +~450 tis.; samostatný sloupec <code>cizinci_docasna_ochrana</code></td></tr>
+          <tr><td>3/2023</td><td>Konec neprodloužených dočasných ochran</td><td>−121 tis. cizinců za měsíc</td></tr>
+        </table></div></section>
+
+      <section id="aktualizace"><h2>Aktualizace</h2>
+        <p>Datové sady se aktualizují automaticky (GitHub Actions): kontrolují zdroje, při změně struktury souboru založí úkol k opravě, jinak připraví nová data ke schválení. Tento web se sestaví z hotových sad každý týden a po každé aktualizaci dat.</p>
+        <div class="posuv"><table class="tab"><tr><th>Data</th><th>Kdy přibývají</th></tr>
+          <tr><td>Obyvatelé obcí podle MV k 1. 1.</td><td>v lednu</td></tr><tr><td>Oficiální počet obyvatel ČSÚ k 1. 1.</td><td>v květnu</td></tr>
+          <tr><td>Cizinci s povoleným pobytem</td><td>každý měsíc; stav k 31. 12. koncem ledna</td></tr></table></div></section>
+
+      <section id="vyvojari"><h2>Pro vývojáře a hackathony</h2>
+        <p>Data jsou na stabilních adresách, není potřeba nic stahovat z GitHubu ručně ani se registrovat.</p>
+        <div class="posuv"><table class="tab">
+          <tr><th>Adresa</th><th>Obsah</th></tr>
+          <tr><td><code>https://opendatabrno.github.io/obyvatele/obyvatele_obce.csv</code></td><td>obce × rok, všechny sloupce (také <code>.xlsx</code>)</td></tr>
+          <tr><td><code>https://opendatabrno.github.io/obyvatele/obyvatele_mestske_casti.csv</code></td><td>městské části × rok</td></tr>
+          <tr><td><code>https://opendatabrno.github.io/cizinci/cizinci_okresy.csv</code></td><td>okresy × rok (také <code>cizinci_okresy_staty</code>, <code>cizinci_staty</code>, <code>cizinci_mesicne</code>)</td></tr>
+          <tr><td><code id="u-obec"></code></td><td>jedna obec jako JSON: všechny řady, městské části („statické API“)</td></tr>
+          <tr><td><code id="u-seznam"></code></td><td>seznam obcí: kód, název, okres, poslední počet obyvatel</td></tr>
+        </table></div>
+        <p>Klíče pro spojení s dalšími daty: <b>kód obce ČSÚ</b> (<code>kod_obce</code>, 6 číslic), <b>kód okresu a kraje</b> (NUTS/LAU, <code>CZ0642</code>, <code>CZ064</code>), <b>kód MČ</b> (<code>kod_mc</code>), stát podle ISO 3166-1 alpha-3.</p>
+        <h3 style="margin-top:18px">Python</h3>
+<pre>import pandas as pd
+obce = pd.read_csv("https://opendatabrno.github.io/obyvatele/obyvatele_obce.csv")
+brno = obce[obce.kod_obce == 582786][["rok", "obyvatele_celkem", "obyvatele_csu", "cizinci_celkem"]]
+print(brno)</pre>
+        <h3>R</h3>
+<pre>obce &lt;- read.csv("https://opendatabrno.github.io/obyvatele/obyvatele_obce.csv", fileEncoding = "UTF-8-BOM")
+subset(obce, kod_obce == 582786, c(rok, obyvatele_celkem, obyvatele_csu, cizinci_celkem))</pre>
+        <h3>JavaScript</h3>
+<pre id="u-js"></pre>
+        <p><b>Nápady na hackathon:</b> které obce se vylidňují a co mají společného · kde vývoj obyvatel nesedí s kapacitou škol a školek ·
+          jak se změnila mapa po roce 2022 · kde se registr nejvíc liší od skutečnosti · chatbot, který odpoví „kolik lidí žije v mé obci“ ze statického API.</p></section>
+
+      <section id="citace"><h2>Citace a licence</h2>
+        <p>Data i grafy lze volně používat a šířit s uvedením zdroje. Doporučená citace:</p>
+        <pre>Zdroj: MV ČR, ČSÚ; zpracování opendatabrno (github.com/opendatabrno)</pre>
+        <p class="pozn">Hranice obcí a okresů: RÚIAN, © ČÚZK, CC BY 4.0. Zdrojový kód webu: <a href="https://github.com/opendatabrno/vizualizace">opendatabrno/vizualizace</a> (licence v repozitáři).</p></section>
+    </div>
+  </div>
+</main>
+<script src="../spolecne/moduly.js"></script>
+<script src="../spolecne/zaklad.js"></script>
+<script>
+Z.hlavicka('metodika');
+const { esc } = Z, adresa = p => new URL(p, Z.KOREN).href;
+document.getElementById('u-obec').textContent = adresa('data/obce/582786.json');
+document.getElementById('u-seznam').textContent = adresa('data/obce.json');
+document.getElementById('u-js').textContent = `const obec = await fetch("${adresa('data/obce/582786.json')}").then(r => r.json());
+console.log(obec.nazev, obec.roky.at(-1), obec.obyvatele.at(-1));`;
+document.getElementById('sady-seznam').innerHTML = MODULY.filter(m => m.stav === 'hotovo').flatMap(m => m.data.map(d => `
+  <div class="sada" style="border-top:4px solid ${m.barva}"><div class="stitek">${esc(m.nazev)}</div><h3>${esc(d.nazev)}</h3>
+    <p class="pozn" style="margin:0">Zdroj: ${esc(d.zdroj)} · aktualizace: ${esc(d.aktualizace)} · <a href="https://github.com/${d.repo}">${esc(d.repo)}</a> (README s popisem sloupců)</p>
+    <div class="soub">${d.soubory.map(([s, p]) => `<span><code>${esc(s)}</code> <span class="mut">${esc(p)}</span></span>
+      <span><a href="${d.web}${s}.csv">CSV</a> · <a href="${d.web}${s}.xlsx">Excel</a></span>`).join('')}</div></div>`)).join('');
+</script>
+</body></html>

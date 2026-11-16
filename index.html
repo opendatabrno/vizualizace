@@ -1,68 +1,89 @@
 <!DOCTYPE html>
-<html lang="cs"><head><meta charset="utf-8"><title>Vizualizace dat</title>
+<html lang="cs"><head><meta charset="utf-8"><title>Obyvatelé ČR v datech</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Interaktivní grafy nad otevřenými datovými sadami opendatabrno, připravené pro vložení na web.">
+<meta name="description" content="Obyvatelé a cizinci ve všech obcích ČR: mapy, profil každé obce, otevřená data a metodika.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="spolecne/styl.css">
 <style>
-:root{--bg:#fff;--fg:#1c1c1c;--mut:#5a5a5a;--soft:#f3f3f3;--line:#d6d6d6;--acc:#2f7f86;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#141718;--fg:#e9ecec;--mut:#a7b0b1;--soft:#1f2425;--line:#384042;--acc:#6cc3c4;color-scheme:dark}}
-*{box-sizing:border-box}html,body{margin:0}
-body{background:var(--bg);color:var(--fg);font:16px/1.45 "IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;padding:18px 16px 28px;max-width:1180px;margin:0 auto}
-h1{margin:6px 0 4px;font-size:clamp(28px,5.4vw,42px);line-height:1.1;text-transform:uppercase}
-.sub{margin:0 0 26px;color:var(--mut);text-transform:uppercase;font-size:14px}
-h2{font-size:20px;text-transform:uppercase;margin:30px 0 4px}h2+p{margin:0 0 14px;color:var(--mut)}
-a{color:var(--acc)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,520px),1fr));gap:20px}
-.karta{border:1px solid var(--line);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
-.karta iframe{width:100%;height:520px;border:0;display:block;background:var(--bg)}
-.karta div{padding:12px 14px;border-top:1px solid var(--line)}
-.karta h3{margin:0 0 4px;font-size:18px}.karta p{margin:0 0 10px;color:var(--mut);font-size:14.5px}
-.kod{display:flex;gap:6px}.kod input{flex:1;min-width:0;font:13px ui-monospace,Consolas,monospace;padding:7px 8px;border:1px solid var(--line);border-radius:3px;background:var(--soft);color:var(--fg)}
-.kod button{font:inherit;font-size:14px;padding:6px 12px;border:0;border-radius:3px;background:var(--acc);color:var(--bg);cursor:pointer}
-.param{border-collapse:collapse;font-size:14.5px;width:100%}.param td{padding:6px 8px;border-top:1px solid var(--line);vertical-align:top}
-.param code{white-space:nowrap}footer{margin-top:28px;color:var(--mut);font-size:13px}
+.hero{padding:42px 0 30px;display:grid;gap:28px;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:center}
+@media (max-width:860px){.hero{grid-template-columns:1fr;padding-top:26px}}
+.hero h1{font-size:clamp(34px,6.4vw,64px)}
+.hero p.lead{font-size:clamp(17px,2.2vw,20px);color:var(--mut);margin:14px 0 22px;max-width:620px}
+.hero .rychle{margin-top:12px;font-size:14px;color:var(--mut)}.hero .rychle a{margin-right:10px}
+.velke{border-radius:10px;padding:22px 22px 14px;background:var(--soft)}
+.velke .h{font-size:clamp(40px,6vw,58px);font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.velke .p{color:var(--mut);margin:6px 0 10px}
+.velke svg{height:90px}
+.velke .r{display:flex;justify-content:space-between;font-size:12px;color:var(--mut)}
+.ostatni .modul{box-shadow:none}
 </style></head><body>
-<h1>Vizualizace dat</h1><p class="sub">Interaktivní grafy nad otevřenými daty · k vložení na web jako iframe</p>
+<main class="obal">
+  <section class="hero">
+    <div>
+      <div class="stitek">Otevřená data o obyvatelích všech obcí ČR</div>
+      <h1>Obyvatelé ČR v datech</h1>
+      <p class="lead">Kolik lidí žije ve vaší obci, kolik jich přibylo nebo ubylo, kolik je mezi nimi cizinců
+        a jak se to liší od oficiálního počtu ČSÚ. Pro obce, novináře, výzkumníky i hackathony.</p>
+      <div id="hledej"></div>
+      <p class="rychle">Například <a href="obec/?kod=582786">Brno</a><a href="obec/?kod=554782">Praha</a><a href="obec/?kod=554821">Ostrava</a><a href="obec/?kod=582824">Bílovice nad Svitavou</a></p>
+    </div>
+    <div class="velke" id="velke" aria-live="polite"><div class="h">&nbsp;</div><div class="p">&nbsp;</div></div>
+  </section>
 
-<h2>Cizinci s povoleným pobytem</h2>
-<p>Data: <a href="https://github.com/opendatabrno/cizinci">opendatabrno/cizinci</a> (MV ČR) a
-<a href="https://github.com/opendatabrno/obyvatele">opendatabrno/obyvatele</a>.</p>
-<div class="grid" id="grid"></div>
+  <h2>Témata</h2>
+  <p class="uvod">Každé téma má vlastní mapy a grafy nad jednou otevřenou datovou sadou. Další témata přibudou.</p>
+  <div class="mrizka" id="moduly"></div>
 
-<h2>Obyvatelé obcí</h2>
-<p>Data: <a href="https://github.com/opendatabrno/obyvatele">opendatabrno/obyvatele</a> (informativní počty obyvatel MV ČR k 1. 1.).</p>
-<div class="grid" id="grid2"></div>
+  <h2>Klíčová čísla za ČR</h2>
+  <p class="uvod" id="klic-uvod">&nbsp;</p>
+  <div class="dlazdice" id="klic"></div>
 
-<h2>Parametry</h2>
-<p>Do adresy grafu lze přidat parametry, např. <code>cizinci/?graf=mapa&amp;okres=CZ0642&amp;nadpis=0</code>.</p>
-<table class="param">
-<tr><td><code>nadpis=0</code></td><td>skryje nadpis (hodí se, když ho má stránka, do které graf vkládáte)</td></tr>
-<tr><td><code>ovladani=0</code></td><td>skryje ovládací prvky; graf ukáže stav podle ostatních parametrů</td></tr>
-<tr><td><code>tema=svetle</code> / <code>tema=tmave</code></td><td>vynutí světlé nebo tmavé barvy (jinak podle nastavení zařízení)</td></tr>
-<tr><td><code>cizinci/?graf=mapa</code></td><td>mapa okresů; dál <code>rok=2025</code>, <code>okres=CZ0642</code> (kód okresu NUTS/LAU), <code>ukazatel=pocet</code> (počet místo podílu)</td></tr>
-<tr><td><code>cizinci/?graf=vyvoj</code></td><td>měsíční vývoj; dál <code>rezim=staty</code>, <code>staty=UKR,SVK,VNM</code> (kódy ISO), <code>od=2015</code>, <code>osa=log</code></td></tr>
-<tr><td><code>obyvatele/?graf=mapa</code></td><td>mapa obcí; dál <code>ukazatel=obcane</code> / <code>cizinci</code>, <code>od=2014</code>, <code>do=2026</code>, <code>kraj=CZ064</code> (přiblížení), <code>obec=582786</code> (kód obce)</td></tr>
-<tr><td><code>obyvatele/?graf=mesto</code></td><td>městské části; dál <code>mesto=582786</code> (kód obce), <code>mc=550973</code> (kód části) a stejné <code>ukazatel</code>, <code>od</code>, <code>do</code></td></tr>
-<tr><td><code>obyvatele/?graf=obec</code></td><td>jedna obec; <code>obec=582786</code></td></tr>
-</table>
-<footer>Zdrojový kód a postup aktualizace: <a href="https://github.com/opendatabrno/vizualizace">github.com/opendatabrno/vizualizace</a></footer>
+  <h2>Dál</h2>
+  <div class="mrizka ostatni">
+    <a class="modul" href="obec/" style="--barva:var(--fg)"><h3>Profil obce</h3><p>Vývoj obyvatel, cizinci, srovnání s okresem, krajem a podobnými obcemi, pořadí. Ke sdílení i k tisku.</p><span class="dal">Vybrat obec →</span></a>
+    <a class="modul" href="metodika/" style="--barva:var(--csu)"><h3>Data a metodika</h3><p>Datové sady ke stažení, význam sloupců, které číslo kdy použít a na jaké zlomy v datech si dát pozor.</p><span class="dal">Číst metodiku →</span></a>
+    <a class="modul" href="metodika/#vyvojari" style="--barva:var(--acc)"><h3>Pro vývojáře a hackathony</h3><p>Stabilní adresy CSV a JSON, data každé obce jako statické API, příklady v Pythonu a R.</p><span class="dal">Začít s daty →</span></a>
+    <a class="modul" href="vlozit/" style="--barva:var(--ciz)"><h3>Grafy k vložení</h3><p>Mapy a grafy, které si obec nebo redakce vloží na svůj web jako iframe. Stačí zkopírovat kód.</p><span class="dal">Vybrat graf →</span></a>
+  </div>
+</main>
+<script src="spolecne/moduly.js"></script>
+<script src="spolecne/zaklad.js"></script>
 <script>
-const GRAFY=[
- ['cizinci/?graf=mapa','Cizinci v okresech','Podíl cizinců na obyvatelích okresů od roku 2013, po kliknutí na okres státy, odkud jeho cizinci jsou.',640],
- ['cizinci/?graf=vyvoj','Cizinci po měsících','Vývoj počtu cizinců v ČR od ledna 2007, celkem podle druhu pobytu nebo podle států (i na logaritmické ose).',720]];
-const GRAFY2=[
- ['obyvatele/?graf=mapa','Obyvatelé obcí','Mapa všech obcí ČR: kde od roku 2014 obyvatel přibylo a kde ubylo, změna občanů ČR bez cizinců a podíl cizinců. Kraj lze přiblížit, obec vyhledat.',720],
- ['obyvatele/?graf=mesto&mesto=582786','Městské části','Totéž za městské části a obvody osmi statutárních měst (Praha, Brno, Ostrava, Plzeň, Pardubice, Opava, Liberec, Ústí nad Labem) s pořadím částí.',900],
- ['obyvatele/?graf=obec&obec=582786','Jedna obec','Vývoj počtu obyvatel jedné obce po letech, občané a cizinci. Hodí se k vložení na web obce (parametr obec = kód obce ČSÚ).',520]];
-const base=location.href.replace(/[^/]*([?#].*)?$/,'');
-const karty=(seznam,od)=>seznam.map(([u,t,p,h],j)=>{const i=od+j;
- const kod=`<iframe src="${base}${u.replace(/&/g,'&amp;')}" width="100%" height="${h}" style="border:0" loading="lazy" title="${t}"></iframe>`;
- return `<div class="karta"><iframe src="${u}" loading="lazy" title="${t}"></iframe><div><h3><a href="${u}">${t}</a></h3><p>${p}</p>
- <div class="kod"><input readonly value="${kod.replace(/"/g,'&quot;')}" aria-label="Kód pro vložení: ${t}" id="k${i}"><button data-i="${i}">Kopírovat</button></div></div></div>`}).join('');
-document.getElementById('grid').innerHTML=karty(GRAFY,0);
-document.getElementById('grid2').innerHTML=karty(GRAFY2,GRAFY.length);
-document.querySelectorAll('.kod button').forEach(b=>b.onclick=()=>{const v=document.getElementById('k'+b.dataset.i);
- (navigator.clipboard?navigator.clipboard.writeText(v.value):Promise.reject()).then(()=>{b.textContent='Zkopírováno'},()=>{v.select();document.execCommand('copy');b.textContent='Zkopírováno'});
- setTimeout(()=>b.textContent='Kopírovat',1800)});
-</script></body></html>
+Z.hlavicka('');
+Z.hledani(document.getElementById('hledej'), { placeholder: 'Napište název obce…' });
+
+Z.nacti('data/souhrn.json').then(S => {
+  const O = S.obyvatele, n = O.roky.length - 1;
+  // velké číslo v úvodu
+  const v = document.getElementById('velke');
+  v.innerHTML = `<div class="stitek">Obyvatelé podle MV k 1. 1. ${O.roky[n]}</div><div class="h" id="vh">0</div>
+    <div class="p">${Z.rozdil(O.obyvatele[n] - O.obyvatele[0])} od roku ${O.roky[0]} (${Z.pct(O.obyvatele[n] / O.obyvatele[0] - 1)}) ·
+    z toho ${Z.cis(O.cizinci[n])} cizinců</div>${Z.spark(O.obyvatele, 'var(--obc)', { vyska: 90 })}
+    <div class="r"><span>${O.roky[0]}</span><span>${O.roky[n]}</span></div>`;
+  Z.nabeh(document.getElementById('vh'), O.obyvatele[n]);
+
+  // karty témat z MODULY
+  document.getElementById('moduly').innerHTML = MODULY.map(m => {
+    if (m.stav !== 'hotovo') return `<div class="modul pripravujeme" style="--barva:${m.barva}"><span class="stitek">Připravujeme</span><h3>${Z.esc(m.nazev)}</h3><p>${Z.esc(m.popis)}</p></div>`;
+    let s = null; try { s = m.souhrn && m.souhrn(S) } catch (e) { console.warn(m.id, e) }
+    return `<a class="modul" href="${m.adresa}" style="--barva:${m.barva}"><h3>${Z.esc(m.nazev)}</h3>
+      ${s ? `<div class="cislo">${Z.cis(s.cislo)}<small>${Z.esc(s.popisek)}</small></div>${Z.spark(s.rada, m.barva)}` : ''}
+      <p>${Z.esc(m.popis)}</p><span class="dal">Otevřít →</span></a>`;
+  }).join('');
+
+  // klíčová čísla
+  const csu = O.odhad_csu[n], podil = O.cizinci[n] / O.obyvatele[n];
+  document.getElementById('klic-uvod').textContent = `Stav k 1. 1. ${O.roky[n]} podle informativních počtů MV, cizinci s povoleným pobytem k poslednímu měsíci.`;
+  const dl = (h, p, z) => `<div class="dl"><div class="h">${h}</div><div class="p">${p}</div>${z ? `<div class="z">${z}</div>` : ''}</div>`;
+  const mezi = O.obyvatele[n] - O.obyvatele[n - 1];
+  document.getElementById('klic').innerHTML = [
+    dl(Z.kratce(O.obyvatele[n]), 'obyvatel podle MV (občané + cizinci)', `<span class="${Z.znamenko(mezi)}">${Z.rozdil(mezi)}</span> za rok`),
+    dl(Z.kratce(O.obcane[n]), 'občanů ČR s trvalým pobytem', `<span class="${Z.znamenko(O.obcane[n] - O.obcane[0])}">${Z.pct(O.obcane[n] / O.obcane[0] - 1)}</span> od ${O.roky[0]}`),
+    dl(Z.pct(podil, false), 'podíl cizinců na obyvatelích', `${Z.kratce(O.docasna_ochrana[n])} z nich s dočasnou ochranou`),
+    dl(csu ? Z.kratce(csu) : '–', 'oficiální počet ČSÚ, nebo jeho odhad', `MV je o ${Z.pct(O.obyvatele[n] / csu - 1, false)} výš`),
+    dl(Z.cis(O.obci), 'obcí, každá má svůj profil', '<a href="obec/">vybrat obec →</a>'),
+  ].join('');
+}).catch(e => { document.getElementById('velke').innerHTML = '<p class="mut">Data se nepodařilo načíst. Stránka musí běžet přes web server.</p>'; console.error(e) });
+</script>
+</body></html>

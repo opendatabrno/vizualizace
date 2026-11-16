@@ -1,37 +1,57 @@
-# Vizualizace dat opendatabrno
+# Obyvatelé ČR v datech
 
-Interaktivní grafy nad datovými sadami [opendatabrno](https://github.com/opendatabrno), připravené
-k vložení na web jako iframe. Data v tomto repozitáři nejsou: při každém nasazení se stáhnou hotové
-datové sady z jejich repozitářů a připraví se z nich malé soubory pro grafy.
+Web nad otevřenými datovými sadami [opendatabrno](https://github.com/opendatabrno): rozcestník,
+témata (obyvatelé, cizinci), profil každé obce, metodika a grafy k vložení na jiné weby.
+Cílová skupina jsou obce, odborná veřejnost a hackathony na data.brno.cz.
 
-- **Web:** https://opendatabrno.github.io/vizualizace/ – přehled grafů a kód pro vložení
-- **Datové sady:** [cizinci](https://github.com/opendatabrno/cizinci) ·
-  [obyvatelé](https://github.com/opendatabrno/obyvatele)
+- **Web:** https://opendatabrno.github.io/vizualizace/
+- **Datové sady:** [obyvatelé](https://github.com/opendatabrno/obyvatele) · [cizinci](https://github.com/opendatabrno/cizinci)
 
-## Grafy
+Data v repozitáři nejsou: při každém nasazení se stáhnou hotové datové sady a připraví se z nich
+malé soubory pro stránky.
 
-### Cizinci s povoleným pobytem (`cizinci/`)
+## Stránky
+
+| Adresa | Co obsahuje |
+|---|---|
+| `/` | rozcestník: vyhledání obce, karty témat, klíčová čísla, odkazy na metodiku a data |
+| `obyvatele/` | téma Obyvatelé: mapa obcí, žebříčky, městské části |
+| `cizinci/` | téma Cizinci: měsíční vývoj, státy, okresy |
+| `obec/?kod=582786` | profil obce: vývoj, srovnání s okresem, krajem a podobnými obcemi, pořadí, složení, cizinci v okrese, MV × ČSÚ, městské části, kód pro vložení |
+| `metodika/` | datové sady ke stažení, pojmy, které číslo použít, zlomy, aktualizace, adresy pro vývojáře, citace |
+| `vlozit/` | galerie grafů s kódem pro vložení (iframe) |
+| `data/obce/{kod}.json` | všechny řady jedné obce (statické API) |
+| `data/obce.json`, `data/souhrn.json` | seznam obcí pro vyhledávání, klíčová čísla za ČR |
+
+## Jak přidat téma (modul)
+
+Úvodní stránka, navigace i seznam datových sad v metodice se skládají ze seznamu
+[`spolecne/moduly.js`](spolecne/moduly.js). Nové téma, např. „Děti“:
+
+1. Přidej položku do `MODULY` (vzor je v souboru zakomentovaný). S `stav: 'pripravujeme'` se na úvodu
+   ukáže jen karta „připravujeme“ a téma není v navigaci.
+2. Vytvoř složku se stránkou tématu (vzor `obyvatele/index.html`: načte `spolecne/styl.css`,
+   `spolecne/moduly.js`, `spolecne/zaklad.js` a zavolá `Z.hlavicka('id')`).
+3. Data připrav v `scripts/build_data.py`; pokud má téma klíčové číslo na úvod, přidej ho do `data/souhrn.json`
+   a do funkce `souhrn` v položce modulu.
+4. Přepni `stav` na `'hotovo'`. Nasazení (`pages.yml`) kopíruje všechny složky, upravovat ho netřeba.
+
+Společné funkce (`spolecne/zaklad.js`, objekt `Z`): formátování čísel (`cis`, `pct`, `kratce`),
+načítání dat (`nacti`), hlavička a patička (`hlavicka`), vyhledávání obce (`hledani`), malý graf (`spark`),
+bublina (`tip`).
+
+## Grafy k vložení
+
+Samostatné stránky `obyvatele/graf.html` a `cizinci/graf.html` fungují bez zbytku webu a jsou určené
+k vložení jako iframe. Starší adresy `obyvatele/?graf=…` a `cizinci/?graf=…` se na ně přesměrují.
 
 | Adresa | Co ukazuje |
 |---|---|
-| `cizinci/?graf=mapa` | mapa okresů: podíl cizinců na obyvatelích k 31. 12. (od 2013), posuvník po letech, po kliknutí na okres nejčastější státy a vývoj podílu |
-| `cizinci/?graf=vyvoj` | měsíční vývoj za celou ČR od ledna 2007: celkem podle druhu pobytu, nebo podle států (12 největších jako tlačítka, dalších ~100 států se ≥ 100 lidmi ze seznamu); očíslované zlomy v řadě (krize 2009, změna evidence 12/2011, brexit, válka na Ukrajině, konec neprodloužených dočasných ochran) |
-
-Podíl na obyvatelích = cizinci s povoleným pobytem k 31. 12. / informativní počet obyvatel MV
-(občané ČR + cizinci) k 1. 1. následujícího roku, sečtený z obcí za okres. Od roku 2022 jsou
-v počtech i lidé s dočasnou ochranou. Říjen 2010 ve zdroji chybí, graf vývoje ho ukazuje jako mezeru.
-
-### Obyvatelé obcí (`obyvatele/`)
-
-| Adresa | Co ukazuje |
-|---|---|
-| `obyvatele/?graf=mapa` | mapa všech ~6 250 obcí: změna počtu obyvatel mezi zvolenými roky (2014–2026), změna počtu občanů ČR (bez cizinců, tedy bez vlivu dočasné ochrany) a podíl cizinců; přiblížení kraje, vyhledání obce, po kliknutí vývoj obce |
-| `obyvatele/?graf=mesto&mesto=582786` | totéž za městské části a obvody 8 statutárních měst, s pořadím částí |
-| `obyvatele/?graf=obec&obec=582786` | sloupcový graf jedné obce po letech (občané a cizinci), k vložení na web obce |
-
-Počty jsou informativní počty obyvatel MV k 1. 1. (občané ČR + cizinci s trvalým nebo přechodným
-pobytem, od 2023 včetně dočasné ochrany). Obce pod 50 obyvatel (hlavně vojenské újezdy) mapa
-nebarví, procenta u nich nic neříkají.
+| `cizinci/graf.html?graf=mapa` | mapa okresů: podíl cizinců na obyvatelích k 31. 12. (od 2013), po kliknutí nejčastější státy |
+| `cizinci/graf.html?graf=vyvoj` | měsíční vývoj za ČR od 2007, celkem podle pobytu nebo podle států, se zlomy v řadě |
+| `obyvatele/graf.html?graf=mapa` | mapa všech obcí: změna obyvatel, změna občanů ČR, podíl cizinců |
+| `obyvatele/graf.html?graf=mesto&mesto=582786` | totéž za městské části 8 statutárních měst |
+| `obyvatele/graf.html?graf=obec&obec=582786` | sloupcový graf jedné obce po letech |
 
 ### Parametry v adrese
 
@@ -58,27 +78,21 @@ Graf si stav ovládání zapisuje do adresy, takže stačí nastavit, co chcete,
 Příklad vložení:
 
 ```html
-<iframe src="https://opendatabrno.github.io/vizualizace/cizinci/?graf=mapa&okres=CZ0642&nadpis=0"
+<iframe src="https://opendatabrno.github.io/vizualizace/cizinci/graf.html?graf=mapa&okres=CZ0642&nadpis=0"
         width="100%" height="640" style="border:0" loading="lazy" title="Cizinci v okresech"></iframe>
 ```
 
 ## Aktualizace dat
 
-Workflow [`.github/workflows/pages.yml`](.github/workflows/pages.yml) sestaví data a nasadí web:
+Workflow [`.github/workflows/pages.yml`](.github/workflows/pages.yml) sestaví data a nasadí web při každém
+pushi do `main`, každé úterý ráno, ručně a na požádání z datového repozitáře (`repository_dispatch` typu
+`data-aktualizovana`).
 
-- při každém pushi do `main`,
-- každé úterý ráno (datové sady se aktualizují v pondělí),
-- ručně (Actions → Run workflow),
-- na požádání z jiného repozitáře (`repository_dispatch` typu `data-aktualizovana`).
+`scripts/build_data.py` stáhne CSV z `raw.githubusercontent.com` a zkontroluje sloupce, počet okresů a obcí,
+součty (státy v okresech, občané + cizinci = obyvatelé, městské části proti obci). Když něco nesedí, skončí
+chybou, web se nenasadí a zůstane poslední funkční verze.
 
-`scripts/build_data.py` stáhne CSV z `raw.githubusercontent.com` a zkontroluje sloupce, počet okresů
-a obcí, že součet států v okresech sedí na tabulku okresů, občané + cizinci = obyvatelé a součet
-městských částí na obec (do 0,5 %, MV je uvádí v drobně odlišných součtech). Když něco nesedí, skončí chybou, web se
-nenasadí a zůstane poslední funkční verze.
-
-### Jednorázové nastavení repozitáře
-
-GitHub → Settings → Pages → Build and deployment → Source: **GitHub Actions**.
+Jednorázově: GitHub → Settings → Pages → Source: **GitHub Actions**.
 
 ## Hranice
 
@@ -116,21 +130,8 @@ python scripts/build_data.py
 python -m http.server
 ```
 
-Pak otevřete http://localhost:8000/. Stránky načítají JSON, takže přes `file://` nefungují.
-S lokálními klony datových repozitářů vedle tohoto (`../cizinci`, `../obyvatele`) jde data sestavit
-i bez stahování: `python scripts/build_data.py --mistni ..`.
-
-## Soubory
-
-| Soubor | Účel |
-|---|---|
-| `index.html` | přehled grafů s kódem pro vložení |
-| `cizinci/index.html` | grafy cizinců (mapa okresů, měsíční vývoj) |
-| `obyvatele/index.html` | grafy obyvatel (mapa obcí, městské části, jedna obec) |
-| `scripts/build_data.py` | stažení datových sad a příprava `cizinci/*.json` a `obyvatele/*.json` (negenerují se do repozitáře) |
-| `scripts/hranice.py` | hranice okresů, obcí a městských částí z RÚIAN → `podklady/*.json` |
-
-Nové téma = nová složka se stránkou a nová funkce v `build_data.py`.
+Pak otevřete http://localhost:8000/. Stránky načítají JSON, přes `file://` nefungují. S lokálními klony
+datových repozitářů vedle tohoto jde data sestavit bez stahování: `python scripts/build_data.py --mistni ..`.
 
 ## Licence
 

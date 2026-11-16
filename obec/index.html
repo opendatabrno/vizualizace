@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="cs"><head><meta charset="utf-8"><title>Profil obce · Obyvatelé ČR v datech</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Profil obce: vývoj počtu obyvatel, občané a cizinci, srovnání s okresem, krajem a podobnými obcemi, pořadí.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+.zahl{padding:30px 0 6px;display:flex;flex-wrap:wrap;gap:16px 28px;align-items:flex-end;justify-content:space-between}
+.zahl>div{min-width:0;max-width:100%}.zahl h1{overflow-wrap:break-word;hyphens:auto}
+.zahl .kde{color:var(--mut);margin-top:6px;font-size:17px}
+.lead{font-size:clamp(17px,2.1vw,20px);max-width:860px;margin:18px 0 22px}
+.lead b{font-weight:700}
+.strip{position:relative;height:74px;margin:10px 0 4px}
+.strip i{position:absolute;top:30px;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:var(--mut);opacity:.45;cursor:pointer}
+.strip i:hover{opacity:1}
+.strip i.ja{width:15px;height:15px;margin-left:-7.5px;top:27px;background:var(--obc);opacity:1;box-shadow:0 0 0 3px var(--bg)}
+.strip .nula{position:absolute;top:12px;bottom:12px;border-left:1px dashed var(--mut)}
+.strip .os{position:absolute;bottom:0;font-size:12px;color:var(--mut);transform:translateX(-50%)}
+.strip .jm{position:absolute;top:0;font-size:13px;font-weight:600;transform:translateX(-50%);white-space:nowrap;color:var(--obc)}
+.poradi{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-top:10px}
+.poradi div{background:var(--soft);border-radius:6px;padding:10px 12px}.poradi b{font-size:22px;display:block}
+.pruh{display:flex;height:22px;border-radius:3px;overflow:hidden;margin:6px 0}
+.pruh span{display:block;height:100%}
+.vyber-obce{max-width:620px;margin:30px 0}
+.velke-obce{columns:3 220px;padding:0;list-style:none;margin:10px 0}.velke-obce li{padding:3px 0}
+#nacitani{padding:60px 0;color:var(--mut)}
+@media print{.zahl .tlacitka{display:none}}
+</style></head><body>
+<main class="obal" id="obsah"><p id="nacitani">Načítám…</p></main>
+<script src="../spolecne/moduly.js"></script>
+<script src="../spolecne/zaklad.js"></script>
+<script>
+Z.hlavicka('obec');
+const $ = id => document.getElementById(id), { cis, pct, rozdil, esc, kratce, znamenko } = Z;
+const kod = Z.Q.get('kod');
+const VELIKOSTI = [[0, 200], [200, 500], [500, 1000], [1000, 2000], [2000, 5000], [5000, 10000], [10000, 20000], [20000, 50000], [50000, 100000], [100000, 1e9]];
+const tridaMezi = ([a, b]) => b >= 1e9 ? `obcemi nad ${cis(a)} obyvatel` : a === 0 ? `obcemi do ${cis(b)} obyvatel` : `obcemi s ${cis(a)}–${cis(b)} obyvateli`;
+const tridaNazev = ([a, b]) => b >= 1e9 ? `obce nad ${cis(a)} obyvatel` : a === 0 ? `obce do ${cis(b)} obyvatel` : `obce s ${cis(a)}–${cis(b)} obyvateli`;
+const median = a => { const s = a.filter(x => x != null && isFinite(x)).sort((x, y) => x - y); if (!s.length) return null; const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2 };
+const sklon = (n, a, b, c) => n === 1 ? a : n >= 2 && n <= 4 ? b : c;
+
+if (!kod) vyberObce(); else Promise.all([Z.nacti(`data/obce/${kod}.json`), Z.nacti('obyvatele/obce.json'), Z.nacti('cizinci/mapa.json').catch(() => null)])
+  .then(([O, V, C]) => profil(O, V, C)).catch(e => { console.error(e); vyberObce(`Obec s kódem ${esc(kod)} jsme nenašli.`) });
+
+function vyberObce(chyba) {
+  document.title = 'Profil obce · Obyvatelé ČR v datech';
+  $('obsah').innerHTML = `<section class="vyber-obce"><div class="stitek">Profil obce</div><h1>Vyberte obec</h1>
+    ${chyba ? `<p class="info">${chyba}</p>` : ''}
+    <p class="uvod">Každá z ~6 250 obcí ČR má vlastní stránku s vývojem počtu obyvatel, cizinci, srovnáním a pořadím. Adresu stránky lze sdílet.</p>
+    <div id="hl"></div></section><h2>Největší obce</h2><ul class="velke-obce" id="velke"></ul>`;
+  Z.hledani($('hl'), { placeholder: 'Napište název obce…' }).focus();
+  Z.nacti('data/obce.json').then(d => $('velke').innerHTML = d.obce.slice(0, 30).map(r => `<li><a href="?kod=${r[0]}">${esc(r[1])}</a> <span class="mut">${cis(r[3])}</span></li>`).join(''));
+}
+
+function profil(O, V, C) {
+  const R = O.roky, n = R.length - 1, ob = O.obyvatele, kodOk = O.kod_okresu, kodKr = O.kod_kraje;
+  document.title = `${O.nazev} – profil obce · Obyvatelé ČR v datech`;
+  const prvni = ob.findIndex(v => v != null);
+  const zmena = ob[n] / ob[prvni] - 1, rok0 = R[prvni];
+  // agregace okres / kraj / ČR a podobné obce z obce.json (všechny obce)
+  const soucet = f => R.map((_, j) => { let s = 0; for (const k in V.obce) { const r = V.obce[k]; if (f(k, r)) s += r[2][j] || 0 } return s });
+  const okres = soucet((k, r) => r[1] === kodOk), kraj = soucet((k, r) => r[1].slice(0, 5) === kodKr), cr = V.cr[0];
+  const trida = VELIKOSTI.find(([a, b]) => ob[n] >= a && ob[n] < b);
+  const podobne = Object.entries(V.obce).filter(([k, r]) => r[2][n] >= trida[0] && r[2][n] < trida[1] && r[2][prvni]);
+  const podobneIdx = R.map((_, j) => median(podobne.map(([, r]) => r[2][j] / r[2][prvni])));
+  const zm = r => r[2][n] / r[2][prvni] - 1;
+  const vOkrese = Object.entries(V.obce).filter(([, r]) => r[1] === kodOk && r[2][prvni] && r[2][n]);
+  const vKraji = Object.entries(V.obce).filter(([, r]) => r[1].slice(0, 5) === kodKr && r[2][prvni] && r[2][n]);
+  const vsechny = Object.entries(V.obce).filter(([, r]) => r[2][prvni] && r[2][n]);
+  const poradi = (sez, f) => 1 + sez.filter(([k, r]) => f(r) > f(V.obce[kod])).length;
+  const velikost = r => r[2][n];
+  const okresZm = okres[n] / okres[prvni] - 1, krajZm = kraj[n] / kraj[prvni] - 1, crZm = cr[n] / cr[prvni] - 1, podZm = podobneIdx[n] - 1;
+  const ciz = O.cizinci[n], podil = ciz / ob[n], csuOff = O.csu[n] != null, csu = O.odhad_csu[n];
+  const meziRok = ob[n] - ob[n - 1];
+
+  // automatický text
+  const srovnej = (a, b, co) => Math.abs(a - b) < 0.005 ? `podobně jako ${co}` : a > b ? `víc než ${co} (${pct(b)})` : `méně než ${co} (${pct(b)})`;
+  const text = `Obec <b>${esc(O.nazev)}</b> měla k 1. 1. ${R[n]} podle Ministerstva vnitra <b>${cis(ob[n])} obyvatel</b>.
+    Od roku ${rok0} jich ${zmena >= 0 ? 'přibylo' : 'ubylo'} ${cis(Math.abs(ob[n] - ob[prvni]))} (<b>${pct(zmena)}</b>), ${srovnej(zmena, okresZm, 'okres ' + esc(O.okres || ''))}
+    a ${srovnej(zmena, podZm, tridaNazev(trida))}. Cizinci tvoří ${pct(podil, false)} obyvatel${O.docasna_ochrana[n] ? `, z toho ${cis(O.docasna_ochrana[n])} ${sklon(O.docasna_ochrana[n], 'člověk má', 'lidé mají', 'lidí má')} dočasnou ochranu` : ''}.
+    ${csu ? `Oficiální počet ČSÚ ${csuOff ? 'je' : 'by podle odhadu byl'} ${cis(csu)}.` : ''}`;
+
+  const dl = (h, p, z) => `<div class="dl"><div class="h">${h}</div><div class="p">${p}</div>${z ? `<div class="z">${z}</div>` : ''}</div>`;
+  $('obsah').innerHTML = `
+  <section class="zahl"><div><div class="stitek">Profil obce · kód ${esc(O.kod)}</div><h1>${esc(O.nazev)}</h1>
+    <div class="kde">okres ${esc(O.okres || '–')} · ${esc(O.kraj || '')}${O.orp ? ` · ORP ${esc(O.orp)}` : ''}</div></div>
+    <div><div id="hl" class="male netisk" style="margin-bottom:10px"></div>
+    <div class="tlacitka netisk"><button class="tl" id="sdilet">Sdílet odkaz</button><button class="tl" onclick="print()">Tisk / PDF</button>
+    <a class="tl" href="#vlozit">Vložit na web</a></div></div></section>
+  <p class="lead">${text}</p>
+  <div class="dlazdice">
+    ${dl(cis(ob[n]), `obyvatel k 1. 1. ${R[n]} (MV)`, `<span class="${znamenko(meziRok)}">${rozdil(meziRok)}</span> za poslední rok`)}
+    ${dl(`<span class="${znamenko(zmena)}">${pct(zmena)}</span>`, `změna od roku ${rok0}`, `okres ${pct(okresZm)} · ČR ${pct(crZm)}`)}
+    ${dl(pct(podil, false), 'podíl cizinců', `${cis(ciz)} cizinců · ČR ${pct(V.cr[1][n] / cr[n], false)}`)}
+    ${dl(csu ? cis(csu) : '–', csuOff ? `oficiální počet ČSÚ k 1. 1. ${R[n]}` : 'odhad oficiálního počtu ČSÚ', csu ? `MV o ${pct(Math.abs(ob[n] / csu - 1), false)} ${ob[n] >= csu ? 'víc' : 'méně'}` : '')}
+    ${dl(`${poradi(vOkrese, velikost)}.`, `největší z ${vOkrese.length} obcí okresu`, `${poradi(vKraji, velikost)}. v kraji · ${cis(poradi(vsechny, velikost))}. v ČR`)}
+  </div>
+
+  <h2>Vývoj počtu obyvatel</h2>
+  <p class="uvod">Občané ČR s trvalým pobytem a cizinci s trvalým nebo přechodným pobytem, vždy k 1. 1. Fialové body: oficiální počet ČSÚ (prázdné = odhad z dat MV).</p>
+  <div class="legenda"><span><i style="background:var(--obc)"></i>občané ČR</span><span><i style="background:var(--ciz)"></i>cizinci</span>
+    <span><i style="background:repeating-linear-gradient(45deg,var(--ciz) 0 3px,var(--do) 3px 6px)"></i>z toho dočasná ochrana</span><span><i style="background:var(--csu);border-radius:50%"></i>počet ČSÚ</span></div>
+  <div id="g-vyvoj"></div>
+
+  <h2>Srovnání</h2>
+  <p class="uvod">Index: počet v roce ${rok0} = 100. Šedá oblast ukazuje rozpětí prostřední poloviny obcí podobné velikosti (${tridaNazev(trida)}, ${cis(podobne.length)} obcí).</p>
+  <div class="ovl netisk"><div class="prepinac" id="p-srov"><button data-k="o" aria-pressed="true">obyvatelé</button><button data-k="b">jen občané ČR</button></div></div>
+  <div class="legenda" id="leg-srov"></div>
+  <div id="g-srov"></div>
+
+  <h2>Pořadí v okrese</h2>
+  <p class="uvod">Změna počtu obyvatel ${rok0}–${R[n]} ve všech obcích okresu ${esc(O.okres || '')}. Každý bod je jedna obec, najetím zobrazíte název.</p>
+  <div class="strip" id="strip"></div>
+  <div class="poradi">
+    <div><b>${poradi(vOkrese, zm)}. z ${vOkrese.length}</b>v růstu v okrese</div>
+    <div><b>${poradi(vKraji, zm)}. z ${vKraji.length}</b>v růstu v kraji</div>
+    <div><b>${cis(poradi(vsechny, zm))}. z ${cis(vsechny.length)}</b>v růstu v ČR</div>
+    <div><b>${cis(poradi(podobne, zm))}. z ${cis(podobne.length)}</b>mezi ${tridaMezi(trida)}</div>
+  </div>
+
+  <h2>Složení obyvatel</h2>
+  <p class="uvod">Stav k 1. 1. ${R[n]}. Věk ani státní příslušnost cizinců data MV za obce neuvádějí.</p>
+  <div class="dve" id="slozeni"></div>
+
+  ${C && C.okresy[kodOk] ? `<h2>Cizinci v okrese ${esc(O.okres)}</h2>
+  <p class="uvod">Odkud cizinci pocházejí, uvádí MV jen za okresy (cizinci s povoleným pobytem k 31. 12.). <a href="../cizinci/">Více v tématu Cizinci →</a></p>
+  <div class="dve" id="ciz-okres"></div>` : ''}
+
+  <h2>Registr MV a oficiální počet ČSÚ</h2>
+  <div class="blok" id="mv-csu"></div>
+
+  ${O.mestske_casti ? `<h2>Městské části</h2>
+  <p class="uvod">Počty obyvatel MV a odhad ve stylu ČSÚ podle Sčítání 2021. <a href="../obyvatele/graf.html?graf=mesto&mesto=${O.kod}">Mapa městských částí →</a></p>
+  <div class="posuv"><table class="tab" id="mc"></table></div>` : ''}
+
+  <h2 id="vlozit">Data a vložení na web</h2>
+  <div class="dve">
+    <div class="blok"><h3>Graf obce na váš web</h3><p class="pozn">Vložte tento kód do stránky obce, graf se každý rok sám aktualizuje.</p>
+      <div class="ovl"><input readonly id="kod-vlozit" style="flex:1;min-width:0;font:13px ui-monospace,Consolas,monospace;padding:8px;border:1px solid var(--line);border-radius:4px;background:var(--soft);color:var(--fg)">
+      <button class="tl hl" id="kopiruj">Kopírovat</button></div>
+      <p class="pozn"><a href="../obyvatele/graf.html?graf=obec&obec=${O.kod}">Náhled grafu</a> · <a href="../vlozit/">další grafy</a></p></div>
+    <div class="blok"><h3>Data obce</h3><p class="pozn">Všechny řady této obce jako JSON (stabilní adresa, vhodné pro aplikace) a celé datové sady.</p>
+      <p><a href="../data/obce/${O.kod}.json">data/obce/${O.kod}.json</a><br><a href="https://opendatabrno.github.io/obyvatele/">Datová sada obyvatel (CSV, Excel)</a><br>
+      <a href="../metodika/">Metodika a význam čísel</a></p></div>
+  </div>`;
+
+  Z.hledani($('hl'), { placeholder: 'Jiná obec…' });
+  $('sdilet').onclick = () => { const b = $('sdilet'); (navigator.share ? navigator.share({ title: document.title, url: location.href }) : navigator.clipboard.writeText(location.href)).then(() => { b.textContent = 'Odkaz zkopírován'; setTimeout(() => b.textContent = 'Sdílet odkaz', 1800) }, () => {}) };
+  const kodV = `<iframe src="${new URL(`../obyvatele/graf.html?graf=obec&obec=${O.kod}`, location).href}" width="100%" height="520" style="border:0" loading="lazy" title="Obyvatelé obce ${esc(O.nazev)}"></iframe>`;
+  $('kod-vlozit').value = kodV;
+  $('kopiruj').onclick = () => navigator.clipboard.writeText(kodV).then(() => { $('kopiruj').textContent = 'Zkopírováno'; setTimeout(() => $('kopiruj').textContent = 'Kopírovat', 1800) });
+
+  grafVyvoj(O);
+  const rady = b => {
+    const f = (a, c) => R.map((_, j) => a[j] == null || !a[prvni] ? null : (a[j] - (c ? c[j] : 0)) / (a[prvni] - (c ? c[prvni] : 0)) * 100);
+    const agreg = sel => b ? soucet((k, r) => sel(r)).map((v, j, a) => v) : null;
+    if (!b) return [{ n: O.nazev, v: f(ob), b: 'var(--obc)', s: 3 }, { n: 'okres ' + (O.okres || ''), v: f(okres), b: 'var(--ciz)' }, { n: 'kraj', v: f(kraj), b: 'var(--csu)' }, { n: 'ČR', v: f(cr), b: 'var(--fg)', d: 1 }];
+    const cizS = sel => R.map((_, j) => { let s = 0; for (const k in V.obce) { const r = V.obce[k]; if (sel(r)) s += r[3][j] || 0 } return s });
+    return [{ n: O.nazev, v: f(O.obcane), b: 'var(--obc)', s: 3 }, { n: 'okres ' + (O.okres || ''), v: f(okres, cizS(r => r[1] === kodOk)), b: 'var(--ciz)' },
+      { n: 'kraj', v: f(kraj, cizS(r => r[1].slice(0, 5) === kodKr)), b: 'var(--csu)' }, { n: 'ČR', v: f(cr, V.cr[1]), b: 'var(--fg)', d: 1 }];
+  };
+  const pas = b => R.map((_, j) => { const h = podobne.map(([, r]) => b ? (r[2][j] - r[3][j]) / (r[2][prvni] - r[3][prvni]) : r[2][j] / r[2][prvni]).filter(isFinite).sort((x, y) => x - y);
+    return h.length ? [h[Math.floor(h.length * .25)] * 100, h[Math.floor(h.length * .75)] * 100] : null });
+  const srov = b => { const r = rady(b); $('leg-srov').innerHTML = r.map(x => `<span><i style="background:${x.b}"></i>${esc(x.n)}</span>`).join('') + '<span><i style="background:var(--soft2)"></i>podobné obce (25–75 %)</span>'; grafCary($('g-srov'), R, r, pas(b), prvni) };
+  srov(false);
+  $('p-srov').onclick = e => { const t = e.target.closest('button'); if (!t) return; $('p-srov').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === t)); srov(t.dataset.k === 'b') };
+
+  // pořadí v okrese: body na ose
+  const hod = vOkrese.map(([k, r]) => [k, r[0], zm(r)]);
+  const mn = Math.min(0, ...hod.map(h => h[2])), mx = Math.max(0, ...hod.map(h => h[2])), sir = mx - mn || 1, x = v => (v - mn) / sir * 100;
+  const kroky = [mn, 0, mx].filter((v, i, a) => a.indexOf(v) === i);
+  $('strip').innerHTML = `<span class="nula" style="left:${x(0)}%"></span>` + hod.map(([k, nz, v]) => `<i data-k="${k}" data-n="${esc(nz)}" data-v="${v}" style="left:${x(v)}%" class="${k === kod ? 'ja' : ''}"></i>`).join('')
+    + kroky.map(v => `<span class="os" style="left:${x(v)}%">${pct(v, true, 0)}</span>`).join('') + `<span class="jm" style="left:${Math.min(92, Math.max(8, x(zmena)))}%">${esc(O.nazev)} ${pct(zmena)}</span>`;
+  $('strip').onmousemove = e => { const i = e.target.closest('i'); Z.tip(e, i ? `<b>${i.dataset.n}</b><br>${pct(+i.dataset.v)}` : '') };
+  $('strip').onmouseleave = e => Z.tip(e, '');
+  $('strip').onclick = e => { const i = e.target.closest('i'); if (i && i.dataset.k !== kod) location.search = '?kod=' + i.dataset.k };
+
+  // složení
+  const pruh = (casti) => { const s = casti.reduce((a, c) => a + (c[1] || 0), 0) || 1; return `<div class="pruh">${casti.map(c => `<span style="width:${(c[1] || 0) / s * 100}%;background:${c[2]}" title="${esc(c[0])}"></span>`).join('')}</div>
+    <table class="tab">${casti.map(c => `<tr><td><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${c[2]};margin-right:6px"></i>${esc(c[0])}</td><td class="c">${cis(c[1])}</td><td class="c">${pct((c[1] || 0) / s, false)}</td></tr>`).join('')}</table>` };
+  const prech = (O.cizinci_prechodny[n] || 0) - (O.docasna_ochrana[n] || 0);
+  $('slozeni').innerHTML = `<div class="blok"><h3>Občané a cizinci</h3>${pruh([['občané ČR', O.obcane[n], 'var(--obc)'], ['cizinci', ciz, 'var(--ciz)']])}</div>
+    <div class="blok"><h3>Muži a ženy</h3>${pruh([['muži', (O.obcane_muzi[n] || 0) + (O.cizinci_muzi[n] || 0), 'var(--acc)'], ['ženy', (O.obcane_zeny[n] || 0) + (O.cizinci_zeny[n] || 0), 'var(--csu)']])}</div>
+    <div class="blok"><h3>Cizinci podle pobytu</h3>${pruh([['trvalý pobyt', O.cizinci_trvaly[n], 'var(--ciz)'], ['přechodný pobyt', prech, 'var(--acc)'], ['dočasná ochrana', O.docasna_ochrana[n], 'var(--do)']])}</div>`;
+
+  // cizinci v okrese
+  if (C && C.okresy[kodOk]) {
+    const ok = C.okresy[kodOk], j = C.roky.length - 1, top = ok.top[j], celk = ok.c[j];
+    const mxT = Math.max(...top.map(t => t[1]));
+    $('ciz-okres').innerHTML = `<div class="blok"><h3>Nejčastější státy k 31. 12. ${C.roky[j]}</h3>
+      ${top.map(([s, v]) => `<div style="display:grid;grid-template-columns:9em 1fr 4.5em;gap:8px;align-items:center;font-size:15px;margin:3px 0"><span>${esc(C.staty[s] || s)}</span>
+      <span style="height:12px;border-radius:2px;background:var(--ciz);width:${v / mxT * 100}%"></span><span class="cisla" style="text-align:right">${cis(v)}</span></div>`).join('')}
+      <p class="pozn">Celkem ${cis(celk)} cizinců v okrese.</p></div>
+      <div class="blok"><h3>Podíl cizinců v okrese</h3><div class="h" style="font-size:34px;font-weight:700">${pct(ok.c[j] / ok.o[j], false)}</div>
+      <p class="pozn">ČR ${pct(C.cr.c[j] / C.cr.o[j], false)} · ${C.roky[0]}: ${pct(ok.c[0] / ok.o[0], false)}</p>${Z.spark(ok.c.map((v, i) => v / ok.o[i]), 'var(--ciz)', { vyska: 70 })}
+      <p class="pozn">Cizinci s povoleným pobytem k 31. 12. / obyvatelé MV k 1. 1. následujícího roku.</p></div>`;
+  }
+
+  // MV × ČSÚ
+  const koef = csu ? (csu - ciz) / O.obcane[n] : null;
+  $('mv-csu').innerHTML = `<div class="dve"><div><p>Ministerstvo vnitra počítá lidi podle <b>registru</b> (trvalý pobyt občanů, pobyt cizinců).
+    Český statistický úřad počítá <b>obyvatele</b> podle sčítání a bilance narozených, zemřelých a stěhování.
+    V registru jsou i lidé, kteří v obci nežijí, proto je číslo MV obvykle vyšší.</p>
+    <p>${csu ? `V obci ${esc(O.nazev)} je podle registru ${cis(ob[n])} lidí, ${csuOff ? 'ČSÚ uvádí' : 'odhad ČSÚ je'} ${cis(csu)}.
+    Odpovídá to zhruba ${pct(Math.min(koef, 1.5), false, 0)} občanů z registru${koef > 1 ? ' (v obci žije víc lidí, než kolik jich tu má trvalý pobyt)' : ''}.` : 'Pro tuto obec počet ČSÚ chybí.'}</p>
+    <p class="pozn">Pro přepočty na obyvatele a srovnání s jinými statistikami používejte počet ČSÚ, pro členění na občany a cizince data MV. <a href="../metodika/#ktere-cislo">Které číslo kdy použít →</a></p></div>
+    <div id="g-csu"></div></div>`;
+  grafCary($('g-csu'), R, [{ n: 'MV (registr)', v: ob, b: 'var(--obc)', s: 3 }, { n: 'ČSÚ / odhad', v: O.odhad_csu, b: 'var(--csu)', s: 3, prer: O.csu.map(v => v == null) }], null, prvni, { abs: true, vyska: 240 });
+
+  // městské části
+  if (O.mestske_casti) {
+    const mc = O.mestske_casti.filter(m => m.obyvatele[n] != null).sort((a, b) => b.obyvatele[n] - a.obyvatele[n]);
+    $('mc').innerHTML = `<tr><th>Městská část</th><th class="c">Obyvatelé MV ${R[n]}</th><th class="c">Změna od ${rok0}</th><th class="c">Odhad ČSÚ</th><th class="c">Podíl občanů, kteří tu žijí</th></tr>` +
+      mc.map(m => { const p0 = m.obyvatele.find(v => v); const z = m.obyvatele[n] / p0 - 1;
+        return `<tr><td><a href="../obyvatele/graf.html?graf=mesto&mesto=${O.kod}&mc=${m.kod}">${esc(m.nazev)}</a></td><td class="c">${cis(m.obyvatele[n])}</td><td class="c ${znamenko(z)}">${pct(z)}</td><td class="c">${cis(m.odhad_csu[n])}</td><td class="c">${m.koef_obcane == null ? '–' : pct(m.koef_obcane, false, 0)}</td></tr>` }).join('');
+  }
+}
+
+/* sloupcový graf vývoje: občané + cizinci (s dočasnou ochranou) a body ČSÚ */
+function grafVyvoj(O) {
+  const R = O.roky, W = 1000, H = 360, ml = 58, mr = 10, mt = 18, mb = 30;
+  const vrch = Math.max(...O.obyvatele.filter(Boolean), ...O.odhad_csu.filter(Boolean)) * 1.04, krok = Z.pekne(vrch / 4), mx = Math.ceil(vrch / krok) * krok;
+  const y = v => mt + (1 - v / mx) * (H - mt - mb), sl = (W - ml - mr) / R.length, bw = sl * .68;
+  let s = `<svg class="graf" viewBox="0 0 ${W} ${H}" role="img" aria-label="Vývoj počtu obyvatel ${Z.esc(O.nazev)}">
+    <defs><pattern id="sr" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="var(--ciz)"/><rect width="3" height="6" fill="var(--do)"/></pattern></defs>`;
+  for (let v = 0; v <= mx + 1e-9; v += krok) { s += `<line class="mr" x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}"/><text class="osa" x="${ml - 8}" y="${y(v) + 4}" text-anchor="end">${Z.kratce(v)}</text>` }
+  R.forEach((r, j) => {
+    const x = ml + j * sl + (sl - bw) / 2, ob = O.obcane[j], cz = O.cizinci[j], d = O.docasna_ochrana[j] || 0;
+    if (ob == null) return;
+    s += `<g class="sl" data-j="${j}"><rect x="${ml + j * sl}" y="${mt}" width="${sl}" height="${H - mt - mb}" fill="transparent"/>
+      <rect x="${x}" y="${y(ob)}" width="${bw}" height="${y(0) - y(ob)}" fill="var(--obc)" rx="1"/>
+      <rect x="${x}" y="${y(ob + cz - d)}" width="${bw}" height="${y(0) - y(cz - d)}" fill="var(--ciz)"/>
+      ${d ? `<rect x="${x}" y="${y(ob + cz)}" width="${bw}" height="${y(0) - y(d)}" fill="url(#sr)"/>` : ''}
+      <text class="osa" x="${x + bw / 2}" y="${H - 10}" text-anchor="middle">${r}</text></g>`;
+  });
+  const b = R.map((r, j) => O.odhad_csu[j] == null ? '' : `<circle cx="${ml + j * sl + sl / 2}" cy="${y(O.odhad_csu[j])}" r="5.5" fill="${O.csu[j] == null ? 'var(--bg)' : 'var(--csu)'}" stroke="var(--csu)" stroke-width="2.5" pointer-events="none"/>`).join('');
+  $('g-vyvoj').innerHTML = s + b + '</svg>';
+  $('g-vyvoj').onmousemove = e => { const g = e.target.closest('.sl'); if (!g) return Z.tip(e, ''); const j = +g.dataset.j;
+    Z.tip(e, `<b>1. 1. ${R[j]}</b><br>obyvatelé MV: ${cis(O.obyvatele[j])}<br>občané ČR: ${cis(O.obcane[j])}<br>cizinci: ${cis(O.cizinci[j])}${O.docasna_ochrana[j] ? ` (dočasná ochrana ${cis(O.docasna_ochrana[j])})` : ''}<br>${O.csu[j] != null ? `ČSÚ: ${cis(O.csu[j])}` : O.odhad_csu[j] != null ? `odhad ČSÚ: ${cis(O.odhad_csu[j])}` : ''}`) };
+  $('g-vyvoj').onmouseleave = e => Z.tip(e, '');
+}
+
+/* spojnicový graf více řad (index nebo absolutní hodnoty), volitelně šedé pásmo */
+function grafCary(el, R, rady, pasmo, prvni, { abs = false, vyska = 320 } = {}) {
+  const W = 1000, H = vyska, ml = 58, mr = 14, mt = 14, mb = 28;
+  const vse = rady.flatMap(r => r.v).concat(pasmo ? pasmo.flat() : []).filter(v => v != null && isFinite(v));
+  let mn = Math.min(...vse), mx = Math.max(...vse); const pad = (mx - mn) * .08 || 1; mn -= pad; mx += pad;
+  const krok = Z.pekne((mx - mn) / 4); mn = Math.floor(mn / krok) * krok; mx = Math.ceil(mx / krok) * krok;
+  const x = j => ml + (j - prvni) / (R.length - 1 - prvni) * (W - ml - mr), y = v => mt + (1 - (v - mn) / (mx - mn)) * (H - mt - mb);
+  let s = `<svg class="graf" viewBox="0 0 ${W} ${H}">`;
+  for (let v = mn; v <= mx + 1e-9; v += krok) s += `<line class="mr" x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}"/><text class="osa" x="${ml - 8}" y="${y(v) + 4}" text-anchor="end">${abs ? Z.kratce(v) : Math.round(v)}</text>`;
+  R.forEach((r, j) => { if (j >= prvni && (j - prvni) % (R.length > 10 ? 2 : 1) === 0 || j === R.length - 1) s += `<text class="osa" x="${x(j)}" y="${H - 8}" text-anchor="middle">${r}</text>` });
+  if (pasmo) { const p = pasmo.map((v, j) => v && j >= prvni ? [x(j), y(v[0]), y(v[1])] : null).filter(Boolean);
+    s += `<path d="M${p.map(q => q[0] + ',' + q[2]).join('L')}L${p.reverse().map(q => q[0] + ',' + q[1]).join('L')}Z" fill="var(--soft2)"/>` }
+  if (!abs) s += `<line x1="${ml}" x2="${W - mr}" y1="${y(100)}" y2="${y(100)}" stroke="var(--mut)" stroke-dasharray="3 4"/>`;
+  [...rady].reverse().forEach(r => { const b = r.v.map((v, j) => v == null || j < prvni ? null : [x(j), y(v)]);
+    const d = b.map((p, j) => p ? (b[j - 1] ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1) : '').join('');
+    s += `<path d="${d}" fill="none" stroke="${r.b}" stroke-width="${r.s || 2}" ${r.d ? 'stroke-dasharray="6 4"' : ''} stroke-linejoin="round"/>`;
+    if (r.prer) s += b.map((p, j) => p ? `<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="${r.prer[j] ? 'var(--bg)' : r.b}" stroke="${r.b}" stroke-width="2"/>` : '').join('');
+    const posl = b.filter(Boolean).at(-1); if (posl && !r.prer) s += `<circle cx="${posl[0]}" cy="${posl[1]}" r="${(r.s || 2) + 1.5}" fill="${r.b}"/>`;
+  });
+  s += `<rect x="${ml}" y="${mt}" width="${W - ml - mr}" height="${H - mt - mb}" fill="transparent" class="kryt"/></svg>`;
+  el.innerHTML = s;
+  const svg = el.querySelector('svg');
+  svg.onmousemove = e => { const bb = svg.getBoundingClientRect(), px = (e.clientX - bb.left) / bb.width * W;
+    const j = Math.max(prvni, Math.min(R.length - 1, Math.round(prvni + (px - ml) / (W - ml - mr) * (R.length - 1 - prvni))));
+    Z.tip(e, `<b>${R[j]}</b><br>` + rady.map(r => `<span style="color:${r.b}">●</span> ${Z.esc(r.n)}: ${r.v[j] == null ? '–' : abs ? cis(r.v[j]) : r.v[j].toFixed(1).replace('.', ',')}`).join('<br>')) };
+  svg.onmouseleave = e => Z.tip(e, '');
+}
+</script>
+</body></html>

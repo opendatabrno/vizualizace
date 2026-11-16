@@ -8,6 +8,9 @@ Výstup:
     cizinci/vyvoj.json  – měsíční řada za ČR, celkem a hlavní státy
     obyvatele/obce.json           – obyvatelé a cizinci ve všech obcích po letech
     obyvatele/mestske_casti.json  – totéž za městské části 8 statutárních měst
+    data/obce/{kod}.json  – všechny sloupce jedné obce po letech (profil obce, „statické API“)
+    data/obce.json        – seznam obcí pro vyhledávání
+    data/souhrn.json      – klíčová čísla za ČR pro úvodní stránku
 
 Když se struktura nebo součty nesrovnají, skript skončí chybou (workflow pak web nenasadí
 a zůstane poslední funkční verze).
@@ -35,10 +38,14 @@ SLOUPCE = {
     ("cizinci", "cizinci_mesicne.csv"): ["rok", "mesic", "stav_k", "kod_statu", "statni_prislusnost", "skupina",
                                          "cizinci_celkem", "cizinci_trvaly_pobyt", "cizinci_prechodny_pobyt",
                                          "cizinci_docasna_ochrana"],
-    ("obyvatele", "obyvatele_obce.csv"): ["rok", "kod_obce", "nazev_obce", "kod_okresu", "okres", "kod_kraje",
-                                          "kraj", "obyvatele_celkem", "obcane_celkem", "cizinci_celkem"],
+    ("obyvatele", "obyvatele_obce.csv"): ["rok", "kod_obce", "nazev_obce", "orp", "kod_okresu", "okres", "kod_kraje",
+                                          "kraj", "obyvatele_celkem", "obyvatele_csu", "odhad_csu",
+                                          "obcane_celkem", "obcane_muzi", "obcane_zeny",
+                                          "cizinci_celkem", "cizinci_muzi", "cizinci_zeny", "cizinci_trvaly_pobyt",
+                                          "cizinci_prechodny_pobyt", "cizinci_docasna_ochrana"],
     ("obyvatele", "obyvatele_mestske_casti.csv"): ["rok", "kod_obce", "nazev_obce", "kod_mc", "nazev_mc",
-                                                   "obyvatele_celkem", "obcane_celkem", "cizinci_celkem"],
+                                                   "obyvatele_celkem", "obcane_celkem", "cizinci_celkem",
+                                                   "odhad_csu", "koef_obcane"],
 }
 
 
@@ -200,8 +207,73 @@ def mestske_casti(m, o):
     return {"roky": [int(y) for y in roky], "mesta": out}
 
 
+SLOUPCE_PROFIL = {
+    "obyvatele": "obyvatele_celkem", "obcane": "obcane_celkem", "obcane_muzi": "obcane_muzi",
+    "obcane_zeny": "obcane_zeny", "cizinci": "cizinci_celkem", "cizinci_muzi": "cizinci_muzi",
+    "cizinci_zeny": "cizinci_zeny", "cizinci_trvaly": "cizinci_trvaly_pobyt",
+    "cizinci_prechodny": "cizinci_prechodny_pobyt", "docasna_ochrana": "cizinci_docasna_ochrana",
+    "csu": "obyvatele_csu", "odhad_csu": "odhad_csu",
+}
+
+
+def profily(o, mc):
+    """Jeden JSON na obec se všemi řadami + seznam obcí pro vyhledávání."""
+    roky = sorted(int(y) for y in o.rok.unique())
+    cil = ROOT / "data" / "obce"
+    cil.mkdir(parents=True, exist_ok=True)
+    for f in cil.glob("*.json"):
+        f.unlink()
+    mc = mc[mc.kod_mc.notna()]
+    mesta = {k: g for k, g in mc.groupby("kod_obce")}
+    seznam = []
+    for kod, g in o.groupby("kod_obce"):
+        g = g.set_index("rok").reindex(roky)
+        posl = g.dropna(subset=["nazev_obce"]).iloc[-1]
+        radek = {"kod": kod, "nazev": posl.nazev_obce, "orp": posl.orp if isinstance(posl.orp, str) else None,
+                 "kod_okresu": posl.kod_okresu if isinstance(posl.kod_okresu, str) else None,
+                 "okres": posl.okres if isinstance(posl.okres, str) else None,
+                 "kod_kraje": posl.kod_kraje if isinstance(posl.kod_kraje, str) else None,
+                 "kraj": posl.kraj if isinstance(posl.kraj, str) else None, "roky": roky}
+        for k, sl in SLOUPCE_PROFIL.items():
+            radek[k] = [None if pd.isna(v) else int(v) for v in g[sl]]
+        if kod in mesta:
+            m = mesta[kod].sort_values("rok")
+            radek["mestske_casti"] = [
+                {"kod": int(k), "nazev": h.nazev_mc.iloc[-1],
+                 "obyvatele": [None if pd.isna(v) else int(v) for v in h.set_index("rok").obyvatele_celkem.reindex(roky)],
+                 "odhad_csu": [None if pd.isna(v) else int(v) for v in h.set_index("rok").odhad_csu.reindex(roky)],
+                 "koef_obcane": None if pd.isna(h.koef_obcane.iloc[-1]) else float(h.koef_obcane.iloc[-1])}
+                for k, h in m.groupby("kod_mc")]
+        (cil / f"{kod}.json").write_text(json.dumps(radek, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        if posl.name == roky[-1]:
+            seznam.append([kod, posl.nazev_obce, radek["okres"] or "", radek["obyvatele"][-1]])
+    kontrola(len(seznam) > 6000, f"profily: jen {len(seznam)} obcí")
+    print(f"  -> data/obce/*.json ({len(list(cil.glob('*.json')))} souborů)")
+    seznam.sort(key=lambda r: -(r[3] or 0))
+    uloz({"roky": roky, "obce": seznam}, ROOT / "data" / "obce.json")
+
+
+def souhrn(o, okresy, mesicne):
+    """Klíčová čísla za ČR pro úvodní stránku a moduly."""
+    cr = o.groupby("rok")[["obyvatele_celkem", "obcane_celkem", "cizinci_celkem", "cizinci_docasna_ochrana",
+                           "odhad_csu"]].sum(min_count=1)
+    roky = [int(y) for y in cr.index]
+    m = mesicne.groupby("stav_k").cizinci_celkem.sum()
+    ok = okresy.groupby("rok").cizinci_celkem.sum()
+    uloz({"obyvatele": {"roky": roky, "obyvatele": cr.obyvatele_celkem.astype(int).tolist(),
+                        "obcane": cr.obcane_celkem.astype(int).tolist(),
+                        "cizinci": cr.cizinci_celkem.astype(int).tolist(),
+                        "docasna_ochrana": cr.cizinci_docasna_ochrana.astype(int).tolist(),
+                        "odhad_csu": [None if pd.isna(v) else int(v) for v in cr.odhad_csu],
+                        "obci": int((o.rok == roky[-1]).sum())},
+          "cizinci": {"roky": [int(y) for y in ok.index], "celkem": ok.astype(int).tolist(),
+                      "posledni_mesic": m.index.max(), "posledni_pocet": int(m.iloc[-1]),
+                      "mesicne": [int(v) for v in m.iloc[-60:]], "mesice": [str(x)[:7] for x in m.index[-60:]]}},
+         ROOT / "data" / "souhrn.json")
+
+
 def uloz(data, cesta):
-    cesta.parent.mkdir(exist_ok=True)
+    cesta.parent.mkdir(parents=True, exist_ok=True)
     cesta.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"  -> {cesta.relative_to(ROOT)} ({cesta.stat().st_size // 1024} kB)")
 
@@ -219,6 +291,8 @@ def main():
     uloz(vyvoj(mesicne), ROOT / "cizinci" / "vyvoj.json")
     uloz(obce(obyv), ROOT / "obyvatele" / "obce.json")
     uloz(mestske_casti(mc, obyv), ROOT / "obyvatele" / "mestske_casti.json")
+    profily(obyv, mc)
+    souhrn(obyv, okresy, mesicne)
 
 
 if __name__ == "__main__":
