@@ -1,11 +1,11 @@
 # Obyvatelé ČR v datech
 
 Web nad otevřenými datovými sadami [opendatabrno](https://github.com/opendatabrno): rozcestník,
-témata (obyvatelé, cizinci), profil každé obce, metodika a grafy k vložení na jiné weby.
+témata (obyvatelé, cizinci, žáci), profil každé obce, metodika a grafy k vložení na jiné weby.
 Cílová skupina jsou obce, odborná veřejnost a hackathony na data.brno.cz.
 
 - **Web:** https://opendatabrno.github.io/vizualizace/
-- **Datové sady:** [obyvatelé](https://github.com/opendatabrno/obyvatele) · [cizinci](https://github.com/opendatabrno/cizinci)
+- **Datové sady:** [obyvatelé](https://github.com/opendatabrno/obyvatele) · [cizinci](https://github.com/opendatabrno/cizinci) · [žáci](https://github.com/opendatabrno/zaci)
 
 Data v repozitáři nejsou: při každém nasazení se stáhnou hotové datové sady a připraví se z nich
 malé soubory pro stránky.
@@ -17,7 +17,8 @@ malé soubory pro stránky.
 | `/` | rozcestník: vyhledání obce, karty témat, klíčová čísla, odkazy na metodiku a data |
 | `obyvatele/` | téma Obyvatelé: mapa obcí, žebříčky, městské části |
 | `cizinci/` | téma Cizinci: měsíční vývoj, státy, okresy |
-| `obec/?kod=582786` | profil obce: vývoj, srovnání s okresem, krajem a podobnými obcemi, pořadí, složení, cizinci v okrese, MV × ČSÚ, městské části, kód pro vložení |
+| `zaci/` | téma Žáci: děti a žáci ve školách obcí za ČR, částka na žáka, žebříček obcí |
+| `obec/?kod=582786` | profil obce: vývoj, srovnání s okresem, krajem a podobnými obcemi, pořadí, složení, cizinci v okrese, školy zřizované obcí, MV × ČSÚ, městské části, kód pro vložení |
 | `metodika/` | datové sady ke stažení, pojmy, které číslo použít, zlomy, aktualizace, adresy pro vývojáře, citace |
 | `vlozit/` | galerie grafů s kódem pro vložení (iframe) |
 | `data/obce/{kod}.json` | všechny řady jedné obce (statické API) |

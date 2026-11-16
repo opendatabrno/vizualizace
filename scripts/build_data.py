@@ -1,13 +1,14 @@
 """Data pro vizualizace: stáhne hotové datové sady opendatabrno a připraví z nich malé JSON.
 
     python scripts/build_data.py                  # stáhne CSV z GitHubu
-    python scripts/build_data.py --mistni ../     # CSV z lokálních klonů (../cizinci, ../obyvatele)
+    python scripts/build_data.py --mistni ../     # CSV z lokálních klonů (../cizinci, ../obyvatele, ../zaci)
 
 Výstup:
     cizinci/mapa.json   – podíl cizinců na obyvatelích po okresech + nejčastější státy
     cizinci/vyvoj.json  – měsíční řada za ČR, celkem a hlavní státy
     obyvatele/obce.json           – obyvatelé a cizinci ve všech obcích po letech
     obyvatele/mestske_casti.json  – totéž za městské části 8 statutárních měst
+    zaci/obce.json      – děti v MŠ a žáci v ZŠ zřizovaných obcemi, po obcích a letech, a částka na žáka
     data/obce/{kod}.json  – všechny sloupce jedné obce po letech (profil obce, „statické API“)
     data/obce.json        – seznam obcí pro vyhledávání
     data/souhrn.json      – klíčová čísla za ČR pro úvodní stránku
@@ -46,6 +47,10 @@ SLOUPCE = {
     ("obyvatele", "obyvatele_mestske_casti.csv"): ["rok", "kod_obce", "nazev_obce", "kod_mc", "nazev_mc",
                                                    "obyvatele_celkem", "obcane_celkem", "cizinci_celkem",
                                                    "odhad_csu", "koef_obcane"],
+    ("zaci", "zaci_obce.csv"): ["rok", "kod_obce", "nazev_obce", "kod_okresu", "ms_celkem", "zs_celkem", "celkem",
+                                "odhad_prostredku_kc", "rok_rozpoctu"],
+    ("zaci", "zaci_svazky_obci.csv"): ["rok", "nazev_svazku", "ms_celkem", "zs_celkem", "celkem"],
+    ("zaci", "castka_na_zaka.csv"): ["rok", "prijemce", "castka_na_zaka_kc", "jednotka", "udaj", "objem_kc_odhad"],
 }
 
 
@@ -207,6 +212,40 @@ def mestske_casti(m, o):
     return {"roky": [int(y) for y in roky], "mesta": out}
 
 
+def zaci(z, sv, castka, obyv):
+    """Děti v MŠ a žáci v ZŠ zřizovaných obcemi (stav k 30. 9.) a částka na žáka ze sdílených daní."""
+    roky = sorted(int(y) for y in z.rok.unique())
+    kontrola(len(roky) >= 5 and roky == list(range(roky[0], roky[-1] + 1)), f"žáci: chybí roky {roky}")
+    for r in roky:
+        n = int((z.rok == r).sum())
+        kontrola(n > 3000, f"žáci: v roce {r} jen {n} obcí")
+    kontrola(not z.duplicated(["rok", "kod_obce"]).any(), "žáci: obec je v roce víckrát")
+    kontrola((z.ms_celkem + z.zs_celkem <= z.celkem).all(), "žáci: MŠ + ZŠ > celkem")
+    nezname = set(z.kod_obce) - set(obyv.kod_obce)
+    kontrola(not nezname, f"žáci: obce, které nejsou v sadě obyvatel: {sorted(nezname)[:10]}")
+
+    p = z.pivot_table(index="kod_obce", columns="rok", values=["ms_celkem", "zs_celkem", "celkem", "odhad_prostredku_kc"])
+    posl = z.sort_values("rok").drop_duplicates("kod_obce", keep="last").set_index("kod_obce")
+
+    def rada(kod, sl):
+        return [None if (sl, y) not in p.columns or pd.isna(p.at[kod, (sl, y)]) else int(p.at[kod, (sl, y)]) for y in roky]
+
+    obce = {kod: [r.nazev_obce, r.kod_okresu if isinstance(r.kod_okresu, str) else "",
+                  rada(kod, "ms_celkem"), rada(kod, "zs_celkem"), rada(kod, "celkem"), rada(kod, "odhad_prostredku_kc")]
+            for kod, r in posl.iterrows()}
+    g = z.groupby("rok")
+    s = sv.groupby("rok").celkem.sum().reindex(roky)
+    c = castka[castka.prijemce == "obce"].sort_values("rok")
+    return {"roky": roky, "obce": obce,
+            "cr": {"ms": g.ms_celkem.sum().astype(int).tolist(), "zs": g.zs_celkem.sum().astype(int).tolist(),
+                   "celkem": g.celkem.sum().astype(int).tolist(),
+                   "svazky": [None if pd.isna(v) else int(v) for v in s],
+                   "obci": g.size().astype(int).tolist(),
+                   "prostredky": [None if pd.isna(v) else int(v) for v in g.odhad_prostredku_kc.sum(min_count=1)]},
+            "castka": {"roky": c.rok.astype(int).tolist(), "kc": c.castka_na_zaka_kc.astype(int).tolist(),
+                       "jednotka": c.jednotka.tolist(), "udaj": c.udaj.tolist()}}
+
+
 SLOUPCE_PROFIL = {
     "obyvatele": "obyvatele_celkem", "obcane": "obcane_celkem", "obcane_muzi": "obcane_muzi",
     "obcane_zeny": "obcane_zeny", "cizinci": "cizinci_celkem", "cizinci_muzi": "cizinci_muzi",
@@ -216,7 +255,7 @@ SLOUPCE_PROFIL = {
 }
 
 
-def profily(o, mc):
+def profily(o, mc, z):
     """Jeden JSON na obec se všemi řadami + seznam obcí pro vyhledávání."""
     roky = sorted(int(y) for y in o.rok.unique())
     cil = ROOT / "data" / "obce"
@@ -225,6 +264,8 @@ def profily(o, mc):
         f.unlink()
     mc = mc[mc.kod_mc.notna()]
     mesta = {k: g for k, g in mc.groupby("kod_obce")}
+    roky_z = sorted(int(y) for y in z.rok.unique())
+    skoly = {k: g.set_index("rok").reindex(roky_z) for k, g in z.groupby("kod_obce")}
     seznam = []
     for kod, g in o.groupby("kod_obce"):
         g = g.set_index("rok").reindex(roky)
@@ -244,6 +285,11 @@ def profily(o, mc):
                  "odhad_csu": [None if pd.isna(v) else int(v) for v in h.set_index("rok").odhad_csu.reindex(roky)],
                  "koef_obcane": None if pd.isna(h.koef_obcane.iloc[-1]) else float(h.koef_obcane.iloc[-1])}
                 for k, h in m.groupby("kod_mc")]
+        if kod in skoly:
+            h = skoly[kod]
+            radek["zaci"] = {"roky": roky_z, **{k: [None if pd.isna(v) else int(v) for v in h[sl]] for k, sl in
+                             (("ms", "ms_celkem"), ("zs", "zs_celkem"), ("celkem", "celkem"),
+                              ("prostredky", "odhad_prostredku_kc"))}}
         (cil / f"{kod}.json").write_text(json.dumps(radek, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
         if posl.name == roky[-1]:
             seznam.append([kod, posl.nazev_obce, radek["okres"] or "", radek["obyvatele"][-1]])
@@ -253,7 +299,7 @@ def profily(o, mc):
     uloz({"roky": roky, "obce": seznam}, ROOT / "data" / "obce.json")
 
 
-def souhrn(o, okresy, mesicne):
+def souhrn(o, okresy, mesicne, zac):
     """Klíčová čísla za ČR pro úvodní stránku a moduly."""
     cr = o.groupby("rok")[["obyvatele_celkem", "obcane_celkem", "cizinci_celkem", "cizinci_docasna_ochrana",
                            "odhad_csu"]].sum(min_count=1)
@@ -268,8 +314,16 @@ def souhrn(o, okresy, mesicne):
                         "obci": int((o.rok == roky[-1]).sum())},
           "cizinci": {"roky": [int(y) for y in ok.index], "celkem": ok.astype(int).tolist(),
                       "posledni_mesic": m.index.max(), "posledni_pocet": int(m.iloc[-1]),
-                      "mesicne": [int(v) for v in m.iloc[-60:]], "mesice": [str(x)[:7] for x in m.index[-60:]]}},
+                      "mesicne": [int(v) for v in m.iloc[-60:]], "mesice": [str(x)[:7] for x in m.index[-60:]]},
+          "zaci": {"roky": zac["roky"], **{k: zac["cr"][k] for k in ("ms", "zs", "celkem", "obci")},
+                   **posledni_castka(zac["castka"])}},
          ROOT / "data" / "souhrn.json")
+
+
+def posledni_castka(c):
+    """Poslední částka na skutečného žáka (předběžné částky na „přepočteného žáka“ od 2026 mají jinou jednotku)."""
+    j = max(i for i, u in enumerate(c["jednotka"]) if u == "žák")
+    return {"castka_rok": c["roky"][j], "castka": c["kc"][j]}
 
 
 def uloz(data, cesta):
@@ -286,13 +340,18 @@ def main():
     mesicne = nacti("cizinci", "cizinci_mesicne.csv", mistni)
     obyv = nacti("obyvatele", "obyvatele_obce.csv", mistni)
     mc = nacti("obyvatele", "obyvatele_mestske_casti.csv", mistni)
+    z = nacti("zaci", "zaci_obce.csv", mistni)
+    sv = nacti("zaci", "zaci_svazky_obci.csv", mistni)
+    castka = nacti("zaci", "castka_na_zaka.csv", mistni)
     print("Připravuji data:")
     uloz(mapa(okresy, staty, obyv), ROOT / "cizinci" / "mapa.json")
     uloz(vyvoj(mesicne), ROOT / "cizinci" / "vyvoj.json")
     uloz(obce(obyv), ROOT / "obyvatele" / "obce.json")
     uloz(mestske_casti(mc, obyv), ROOT / "obyvatele" / "mestske_casti.json")
-    profily(obyv, mc)
-    souhrn(obyv, okresy, mesicne)
+    zac = zaci(z, sv, castka, obyv)
+    uloz(zac, ROOT / "zaci" / "obce.json")
+    profily(obyv, mc, z)
+    souhrn(obyv, okresy, mesicne, zac)
 
 
 if __name__ == "__main__":

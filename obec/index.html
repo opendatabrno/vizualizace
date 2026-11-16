@@ -131,6 +131,12 @@ function profil(O, V, C) {
   <p class="uvod">Odkud cizinci pocházejí, uvádí MV jen za okresy (cizinci s povoleným pobytem k 31. 12.). <a href="../cizinci/">Více v tématu Cizinci →</a></p>
   <div class="dve" id="ciz-okres"></div>` : ''}
 
+  <h2 id="zaci">Školy zřizované obcí</h2>
+  ${O.zaci ? `<p class="uvod">Děti v mateřských a žáci v základních školách, které obec zřizuje, vždy k 30. 9. Patří sem i děti z okolních obcí, které do škol obce dojíždějí. <a href="../zaci/">Více v tématu Žáci →</a></p>
+  <div class="dlazdice" id="zaci-klic"></div>
+  <div class="legenda" style="margin-top:14px"><span><i style="background:var(--csu)"></i>mateřské školy</span><span><i style="background:var(--zak)"></i>základní školy</span><span><i style="background:var(--mut)"></i>ostatní</span></div>
+  <div id="g-zaci"></div>` : `<p class="uvod">Obec v datech Ministerstva financí (2014–2024) není, takže sama nezřizuje mateřskou ani základní školu. Školu může mít společně s okolními obcemi ve svazku obcí (svazky jsou v datech zvlášť, bez rozdělení na obce), jinak děti chodí do škol jiných obcí nebo jiných zřizovatelů. <a href="../zaci/">Téma Žáci →</a></p>`}
+
   <h2>Registr MV a oficiální počet ČSÚ</h2>
   <div class="blok" id="mv-csu"></div>
 
@@ -201,6 +207,9 @@ function profil(O, V, C) {
       <p class="pozn">Cizinci s povoleným pobytem k 31. 12. / obyvatelé MV k 1. 1. následujícího roku.</p></div>`;
   }
 
+  // školy zřizované obcí
+  if (O.zaci) grafZaci(O);
+
   // MV × ČSÚ
   const koef = csu ? (csu - ciz) / O.obcane[n] : null;
   $('mv-csu').innerHTML = `<div class="dve"><div><p><b>MV</b> počítá lidi podle <b>registru</b> (trvalý pobyt občanů, pobyt cizinců) a je k dispozici každý rok hned v lednu.
@@ -222,6 +231,37 @@ function profil(O, V, C) {
       mc.map(m => { const p0 = m.obyvatele[jm] || m.obyvatele.find(v => v); const z = m.obyvatele[n] / p0 - 1;
         return `<tr><td><a href="../obyvatele/graf.html?graf=mesto&mesto=${O.kod}&mc=${m.kod}">${esc(m.nazev)}</a></td><td class="c">${cis(m.obyvatele[n])}</td><td class="c ${znamenko(z)}">${pct(z)}</td><td class="c">${cis(m.odhad_csu[n])}</td><td class="c">${m.koef_obcane == null ? '–' : pct(m.koef_obcane, false, 0)}</td></tr>` }).join('');
   }
+}
+
+/* děti a žáci ve školách obce: dlaždice a skládaný sloupcový graf */
+function grafZaci(O) {
+  const Zr = O.zaci, R = Zr.roky, n = R.length - 1, p0 = Zr.celkem.findIndex(v => v != null);
+  const ost = R.map((_, j) => Zr.celkem[j] == null ? null : Zr.celkem[j] - (Zr.ms[j] || 0) - (Zr.zs[j] || 0));
+  const jo = O.roky.indexOf(R[n] + 1), obyv = jo >= 0 ? O.obyvatele[jo] : null, c = Zr.celkem[n];
+  const dl = (h, p, z) => `<div class="dl"><div class="h">${h}</div><div class="p">${p}</div>${z ? `<div class="z">${z}</div>` : ''}</div>`;
+  const kc = v => v >= 1e6 ? `${(v / 1e6).toLocaleString('cs-CZ', { maximumFractionDigits: v >= 1e8 ? 0 : 1 })} mil. Kč` : `${cis(v)} Kč`;
+  $('zaci-klic').innerHTML = c == null ? '<p class="mut">V posledním roce obec žádnou školu nezřizuje.</p>' : [
+    dl(cis(c), `dětí a žáků k 30. 9. ${R[n]}`, p0 >= 0 && p0 < n ? `<span class="${znamenko(c - Zr.celkem[p0])}">${pct(c / Zr.celkem[p0] - 1)}</span> od ${R[p0]}` : ''),
+    dl(cis(Zr.ms[n]), 'dětí v mateřských školách', ''),
+    dl(cis(Zr.zs[n]), 'žáků v základních školách', ''),
+    dl(obyv ? cis(Math.round(c / obyv * 1000)) : '–', 'dětí a žáků na 1 000 obyvatel', obyv ? `obyvatelé MV k 1. 1. ${R[n] + 1}` : ''),
+    dl(Zr.prostredky[n] ? kc(Zr.prostredky[n]) : '–', `odhad prostředků ze sdílených daní v roce ${R[n] + 1}`, ''),
+  ].join('');
+  const W = 1000, H = 260, ml = 58, mr = 10, mt = 14, mb = 28;
+  const mx0 = Math.max(...Zr.celkem.filter(v => v != null)) * 1.08, krok = Z.pekne(mx0 / 4), mx = Math.ceil(mx0 / krok) * krok;
+  const y = v => mt + (1 - v / mx) * (H - mt - mb), sl = (W - ml - mr) / R.length, bw = sl * .66;
+  let s = `<svg class="graf" viewBox="0 0 ${W} ${H}" role="img" aria-label="Děti a žáci ve školách obce">`;
+  for (let v = 0; v <= mx + 1e-9; v += krok) s += `<line class="mr" x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}"/><text class="osa" x="${ml - 8}" y="${y(v) + 4}" text-anchor="end">${Z.kratce(v)}</text>`;
+  R.forEach((r, j) => {
+    const x = ml + j * sl + (sl - bw) / 2; let z = 0;
+    s += `<g class="sl" data-j="${j}"><rect x="${ml + j * sl}" y="${mt}" width="${sl}" height="${H - mt - mb}" fill="transparent"/>`;
+    for (const [v, b] of [[Zr.ms[j], 'var(--csu)'], [Zr.zs[j], 'var(--zak)'], [ost[j], 'var(--mut)']]) { if (!v) continue; s += `<rect x="${x}" y="${y(z + v)}" width="${bw}" height="${y(z) - y(z + v)}" fill="${b}"/>`; z += v }
+    s += `<text class="osa" x="${x + bw / 2}" y="${H - 9}" text-anchor="middle">${r}</text></g>`;
+  });
+  $('g-zaci').innerHTML = s + '</svg>';
+  $('g-zaci').onmousemove = e => { const g = e.target.closest('.sl'); if (!g) return Z.tip(e, ''); const j = +g.dataset.j;
+    Z.tip(e, Zr.celkem[j] == null ? `<b>30. 9. ${R[j]}</b><br>obec školu nezřizovala` : `<b>30. 9. ${R[j]}</b><br>mateřské školy: ${cis(Zr.ms[j])}<br>základní školy: ${cis(Zr.zs[j])}<br>ostatní: ${cis(ost[j])}<br>celkem: ${cis(Zr.celkem[j])}${Zr.prostredky[j] ? `<br>odhad prostředků ${R[j] + 1}: ${kc(Zr.prostredky[j])}` : ''}`) };
+  $('g-zaci').onmouseleave = e => Z.tip(e, '');
 }
 
 /* sloupcový graf vývoje: občané + cizinci (s dočasnou ochranou) a body ČSÚ */

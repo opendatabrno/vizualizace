@@ -51,6 +51,26 @@ window.MODULY = [
       rada: S.cizinci.mesicne
     })
   },
+  {
+    id: 'zaci',
+    nazev: 'Žáci',
+    popis: 'Děti v mateřských a žáci v základních školách zřizovaných obcemi od roku 2014, po obcích, a kolik obce dostávají na žáka ze sdílených daní.',
+    barva: 'var(--zak)',
+    adresa: 'zaci/',
+    stav: 'hotovo',
+    data: [{
+      nazev: 'Děti a žáci ve školách zřizovaných obcemi', repo: 'opendatabrno/zaci', zdroj: 'MF ČR (z výkazů MŠMT)',
+      web: 'https://opendatabrno.github.io/zaci/',
+      soubory: [['zaci_obce', 'obce × rok, stav k 30. 9., 2014–dosud'],
+                ['zaci_svazky_obci', 'školy dobrovolných svazků obcí × rok'],
+                ['castka_na_zaka', 'Kč na žáka ze sdílených daní, rozpočtové roky 2013–dosud']],
+      aktualizace: 'jednou ročně (MF zveřejňuje v lednu až červnu)'
+    }],
+    souhrn: S => ({
+      cislo: S.zaci.celkem.at(-1), popisek: `dětí a žáků ve školách obcí k 30. 9. ${S.zaci.roky.at(-1)}`,
+      rada: S.zaci.celkem
+    })
+  },
   // Vzor dalšího modulu:
   // { id: 'deti', nazev: 'Děti', popis: 'Počty dětí v obcích podle věku …', barva: 'var(--csu)',
   //   adresa: 'deti/', stav: 'pripravujeme', data: [] },

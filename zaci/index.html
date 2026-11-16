@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="cs"><head><meta charset="utf-8"><title>Žáci · Obyvatelé ČR v datech</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Děti v mateřských a žáci v základních školách zřizovaných obcemi od roku 2014, po obcích, a kolik obce dostávají na žáka ze sdílených daní.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../spolecne/styl.css">
+<style>
+.zahl{padding:30px 0 4px}
+.zeb td.sp{width:120px}.zeb td.sp svg{height:26px}
+.zeb tr{cursor:pointer}.zeb tbody tr:hover td{background:var(--soft)}
+.zeb .por{color:var(--mut);width:2.5em}
+</style></head><body>
+<main class="obal">
+  <section class="zahl"><div class="stitek" style="color:var(--zak)">Téma</div><h1>Žáci</h1>
+    <p class="uvod">Děti v mateřských školách a žáci v základních školách, které zřizují obce, vždy ke stavu k 30. září.
+      Podle těchto počtů dostávají obce část sdílených daní. Data zveřejňuje Ministerstvo financí z výkazů škol.</p>
+    <div id="hl" class="male" style="max-width:420px"></div></section>
+  <div class="dlazdice" id="klic" style="margin-top:22px"></div>
+
+  <h2>Vývoj za ČR</h2>
+  <p class="uvod">Děti a žáci ve školách zřizovaných obcemi (bez svazků obcí). „Ostatní“ jsou přípravné třídy, individuální a zahraniční vzdělávání a nižší stupeň víceletých gymnázií.</p>
+  <div class="legenda"><span><i style="background:var(--csu)"></i>mateřské školy</span><span><i style="background:var(--zak)"></i>základní školy</span><span><i style="background:var(--mut)"></i>ostatní</span></div>
+  <div id="g-cr"></div>
+
+  <h2>Kolik obce dostávají na žáka</h2>
+  <p class="uvod">Obce nedostávají na školy zvláštní příspěvek. Část sdílených daní se mezi ně dělí podle počtu dětí a žáků ve školách, které zřizují,
+    a peníze nejsou účelové. Částka pro rozpočtový rok se počítá z počtu žáků k 30. 9. předchozího roku.</p>
+  <div id="g-castka"></div>
+  <p class="pozn" id="castka-pozn"></p>
+
+  <h2>Obce</h2>
+  <p class="uvod">Žebříček obcí podle počtu dětí a žáků v jejich školách. Kliknutím na řádek otevřete profil obce.</p>
+  <div class="ovl">
+    <select id="z-uk" aria-label="Ukazatel"><option value="celkem">nejvíc dětí a žáků</option><option value="rust">nejrychleji rostoucí</option>
+      <option value="pokles">nejrychleji ubývající</option><option value="na1000">nejvíc na 1 000 obyvatel</option><option value="kc">nejvíc peněz ze sdílených daní</option></select>
+    <select id="z-kraj" aria-label="Kraj"><option value="">celá ČR</option></select>
+    <select id="z-vel" aria-label="Velikost"><option value="0">všechny obce se školou</option><option value="100" selected>nad 100 dětí a žáků</option><option value="1000">nad 1 000 dětí a žáků</option></select>
+  </div>
+  <div class="posuv"><table class="tab zeb" id="zeb"></table></div>
+  <p class="pozn">Na 1 000 obyvatel: děti a žáci ve školách obce k 30. 9. proti obyvatelům MV k 1. 1. následujícího roku. Vysoké číslo znamená, že do škol obce chodí i děti z okolí.</p>
+
+  <h2>Na co si dát pozor</h2>
+  <div class="dve">
+    <div class="blok"><h3>Podle zřizovatele, ne bydliště</h3><p>Počty patří obci, která školu zřizuje, ne obci, kde dítě bydlí. Obec, která žádnou mateřskou ani základní školu nezřizuje, v datech není. Její děti chodí do škol jiných obcí, svazků obcí, krajů, církví nebo soukromých zřizovatelů.</p></div>
+    <div class="blok"><h3>Částka na žáka</h3><p>Od roku 2018 se podle žáků dělí 9 % sdílených daní (do roku 2017 7 %), proto skok o 44 %. Pro rok 2026 MF uvádí předběžnou částku na „přepočteného žáka“, která s předchozími roky není srovnatelná. Prostředky obce jsou náš odhad: počet žáků × částka na žáka.</p><p><a href="../metodika/#zlomy">Zlomy v datech →</a></p></div>
+  </div>
+
+  <h2>Data</h2>
+  <div class="blok"><p>Datová sada <a href="https://github.com/opendatabrno/zaci">opendatabrno/zaci</a> · <a href="https://opendatabrno.github.io/zaci/">stažení CSV a Excel</a> · <a href="../metodika/">metodika</a></p></div>
+</main>
+<script src="../spolecne/moduly.js"></script>
+<script src="../spolecne/zaklad.js"></script>
+<script>
+Z.hlavicka('zaci');
+Z.hledani(document.getElementById('hl'), { placeholder: 'Profil obce…' });
+const $ = id => document.getElementById(id), { cis, pct, rozdil, esc, kratce, znamenko } = Z;
+const dl = (h, p, z) => `<div class="dl"><div class="h">${h}</div><div class="p">${p}</div>${z ? `<div class="z">${z}</div>` : ''}</div>`;
+const kc = v => v >= 1e9 ? `${(v / 1e9).toLocaleString('cs-CZ', { maximumFractionDigits: 1 })} mld. Kč` : v >= 1e6 ? `${(v / 1e6).toLocaleString('cs-CZ', { maximumFractionDigits: 1 })} mil. Kč` : `${cis(v)} Kč`;
+
+/* sloupcový graf: řady se skládají na sebe */
+function sloupce(el, popisky, rady, { vyska = 320, tip, znacky = {} } = {}) {
+  const W = 1000, H = vyska, ml = 62, mr = 8, mt = 22, mb = 28, n = popisky.length;
+  const souc = popisky.map((_, j) => rady.reduce((s, r) => s + (r.v[j] || 0), 0));
+  const krok = Z.pekne(Math.max(...souc) * 1.08 / 4), mx = Math.ceil(Math.max(...souc) * 1.08 / krok) * krok;
+  const y = v => mt + (1 - v / mx) * (H - mt - mb), sl = (W - ml - mr) / n, bw = sl * .66;
+  let s = `<svg class="graf" viewBox="0 0 ${W} ${H}" role="img">`;
+  for (let v = 0; v <= mx + 1e-9; v += krok) s += `<line class="mr" x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}"/><text class="osa" x="${ml - 8}" y="${y(v) + 4}" text-anchor="end">${Z.kratce(v)}</text>`;
+  popisky.forEach((p, j) => {
+    const x = ml + j * sl + (sl - bw) / 2; let z = 0;
+    s += `<g class="sl" data-j="${j}"><rect x="${ml + j * sl}" y="${mt}" width="${sl}" height="${H - mt - mb}" fill="transparent"/>`;
+    for (const r of rady) { const v = r.v[j] || 0; s += `<rect x="${x}" y="${y(z + v)}" width="${bw}" height="${y(z) - y(z + v)}" fill="${r.b}"/>`; z += v }
+    s += `<text class="osa" x="${x + bw / 2}" y="${H - 9}" text-anchor="middle">${p}</text>`;
+    if (znacky[j]) s += `<text x="${x + bw / 2}" y="${y(z) - 7}" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--fg)">${znacky[j]}</text>`;
+    s += '</g>';
+  });
+  el.innerHTML = s + '</svg>';
+  el.onmousemove = e => { const g = e.target.closest('.sl'); Z.tip(e, g ? tip(+g.dataset.j) : '') };
+  el.onmouseleave = e => Z.tip(e, '');
+}
+
+Promise.all([Z.nacti('zaci/obce.json'), Z.nacti('obyvatele/obce.json')]).then(([D, V]) => {
+  const R = D.roky, n = R.length - 1, cr = D.cr, c = D.castka;
+  const jk = c.jednotka.lastIndexOf('žák'), pred = c.jednotka.length - 1 > jk ? c.jednotka.length - 1 : null;
+  const zm = (a, b) => `<span class="${znamenko(a - b)}">${pct(a / b - 1)}</span> od ${R[0]}`;
+  $('klic').innerHTML = [
+    dl(kratce(cr.celkem[n]), `dětí a žáků ve školách obcí k 30. 9. ${R[n]}`, zm(cr.celkem[n], cr.celkem[0])),
+    dl(kratce(cr.ms[n]), 'dětí v mateřských školách', zm(cr.ms[n], cr.ms[0])),
+    dl(kratce(cr.zs[n]), 'žáků v základních školách', zm(cr.zs[n], cr.zs[0])),
+    dl(cis(cr.obci[n]), 'obcí zřizuje aspoň jednu MŠ nebo ZŠ', `z ${cis(Object.keys(V.obce).length)} obcí ČR`),
+    dl(`${cis(c.kc[jk])} Kč`, `na žáka ze sdílených daní v roce ${c.roky[jk]}`, cr.prostredky[n] ? `celkem asi ${kc(cr.prostredky[n])}` : ''),
+  ].join('');
+
+  const ost = R.map((_, j) => cr.celkem[j] - cr.ms[j] - cr.zs[j]);
+  sloupce($('g-cr'), R, [{ v: cr.ms, b: 'var(--csu)' }, { v: cr.zs, b: 'var(--zak)' }, { v: ost, b: 'var(--mut)' }], {
+    tip: j => `<b>30. 9. ${R[j]}</b><br>mateřské školy: ${cis(cr.ms[j])}<br>základní školy: ${cis(cr.zs[j])}<br>ostatní: ${cis(ost[j])}<br>celkem: ${cis(cr.celkem[j])}<br>obcí se školou: ${cis(cr.obci[j])}${cr.svazky[j] ? `<br>+ svazky obcí: ${cis(cr.svazky[j])}` : ''}` });
+
+  // graf jen z částek na skutečného žáka; předběžná částka na „přepočteného žáka“ (od 2026) má jinou jednotku
+  const ks = c.roky.map((r, i) => i).filter(i => c.jednotka[i] === 'žák'), kr = ks.map(i => c.roky[i]), kv = ks.map(i => c.kc[i]);
+  const zn = {}; kr.forEach((r, i) => { if (r === 2018) zn[i] = '9 % daní' });
+  sloupce($('g-castka'), kr, [{ v: kv, b: 'var(--zak)' }], { vyska: 280, znacky: zn,
+    tip: i => `<b>rozpočtový rok ${kr[i]}</b><br>${cis(kv[i])} Kč na žáka<br>žáci k 30. 9. ${kr[i] - 1}<br>${esc(c.udaj[ks[i]])}` });
+  $('castka-pozn').textContent = pred != null ? `Pro rok ${c.roky[pred]} MF uvádí předběžně ${cis(c.kc[pred])} Kč na „přepočteného žáka“. Je to jiná jednotka, proto v grafu není.` : '';
+
+  // žebříček
+  for (const [k, v] of Object.entries(V.kraje)) $('z-kraj').add(new Option(v, k));
+  const jo = V.roky.indexOf(R[n] + 1);   // obyvatelé k 1. 1. následujícího roku
+  const kresli = () => {
+    const uk = $('z-uk').value, kr = $('z-kraj').value, vel = +$('z-vel').value;
+    const obyv = k => V.obce[k] && jo >= 0 ? V.obce[k][2][jo] : null;
+    const f = { celkem: r => r[4][n], rust: r => r[4][0] ? r[4][n] / r[4][0] - 1 : NaN, pokles: r => r[4][0] ? -(r[4][n] / r[4][0] - 1) : NaN,
+      na1000: (r, k) => obyv(k) ? r[4][n] / obyv(k) * 1000 : NaN, kc: r => r[5][n] ?? NaN }[uk];
+    const sez = Object.entries(D.obce).filter(([k, r]) => r[4][n] != null && r[4][n] >= vel && (!kr || r[1].slice(0, 5) === kr))
+      .map(([k, r]) => [k, r, f(r, k)]).filter(x => isFinite(x[2])).sort((x, y) => y[2] - x[2]).slice(0, 25);
+    $('zeb').innerHTML = `<thead><tr><th class="por">#</th><th>Obec</th><th>Okres</th><th class="c">MŠ ${R[n]}</th><th class="c">ZŠ ${R[n]}</th><th class="c">Celkem</th><th class="c">Změna od ${R[0]}</th><th class="c">Na 1 000 obyv.</th><th class="c">Odhad prostředků</th><th class="sp">Vývoj</th></tr></thead><tbody>` +
+      sez.map(([k, r], i) => { const z = r[4][0] ? r[4][n] / r[4][0] - 1 : null, o = obyv(k);
+        return `<tr data-k="${k}"><td class="por">${i + 1}.</td><td><a href="../obec/?kod=${k}#zaci">${esc(r[0])}</a></td><td class="mut">${esc(V.okresy[r[1]] || '')}</td>
+        <td class="c">${cis(r[2][n])}</td><td class="c">${cis(r[3][n])}</td><td class="c"><b>${cis(r[4][n])}</b></td>
+        <td class="c ${z == null ? '' : znamenko(z)}">${z == null ? '–' : pct(z)}</td><td class="c">${o ? cis(Math.round(r[4][n] / o * 1000)) : '–'}</td>
+        <td class="c">${r[5][n] ? kc(r[5][n]) : '–'}</td><td class="sp">${Z.spark(r[4], 'var(--zak)', { vyska: 26, sirka: 120 })}</td></tr>` }).join('') + '</tbody>';
+  };
+  ['z-uk', 'z-kraj', 'z-vel'].forEach(id => $(id).onchange = kresli);
+  $('zeb').onclick = e => { const tr = e.target.closest('tr[data-k]'); if (tr && !e.target.closest('a')) location.href = '../obec/?kod=' + tr.dataset.k + '#zaci' };
+  kresli();
+}).catch(e => { $('klic').innerHTML = '<p class="mut">Data se nepodařilo načíst.</p>'; console.error(e) });
+</script>
+</body></html>

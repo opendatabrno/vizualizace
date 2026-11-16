@@ -5,3 +5,4 @@ data/
 _site/
 __pycache__/
 *.pyc
+zaci/*.json
