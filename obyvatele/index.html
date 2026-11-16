@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="cs"><head><meta charset="utf-8"><title>Obyvatelé · Obyvatelé ČR v datech</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Obyvatelé všech obcí a městských částí ČR od roku 2014: mapa změn, žebříčky obcí, občané a cizinci.">
+<meta name="description" content="Obyvatelé všech obcí a městských částí ČR od roku 2004: mapa změn, žebříčky obcí, občané a cizinci.">
 <script>if (new URLSearchParams(location.search).has('graf')) location.replace('graf.html' + location.search)</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
 </style></head><body>
 <main class="obal">
   <section class="zahl"><div class="stitek" style="color:var(--obc)">Téma</div><h1>Obyvatelé</h1>
-    <p class="uvod">Informativní počty obyvatel Ministerstva vnitra ve všech obcích a městských částech od roku 2014,
+    <p class="uvod">Informativní počty obyvatel Ministerstva vnitra ve všech obcích a městských částech od roku 2004,
       stav vždy k 1. 1. Občané ČR s trvalým pobytem a cizinci s trvalým nebo přechodným pobytem, k tomu oficiální počet ČSÚ.</p>
     <div id="hl" class="male" style="max-width:420px"></div></section>
   <div class="dlazdice" id="klic" style="margin-top:22px"></div>
@@ -57,11 +57,11 @@ Z.hledani(document.getElementById('hl'), { placeholder: 'Profil obce…' });
 const $ = id => document.getElementById(id), { cis, pct, rozdil, esc, kratce, znamenko } = Z;
 
 Z.nacti('data/souhrn.json').then(S => {
-  const O = S.obyvatele, n = O.roky.length - 1;
+  const O = S.obyvatele, n = O.roky.length - 1, a = Math.max(0, O.roky.indexOf(Z.OD));
   const dl = (h, p, z) => `<div class="dl"><div class="h">${h}</div><div class="p">${p}</div>${z ? `<div class="z">${z}</div>` : ''}</div>`;
   $('klic').innerHTML = [
-    dl(kratce(O.obyvatele[n]), `obyvatel k 1. 1. ${O.roky[n]} (MV)`, `<span class="${znamenko(O.obyvatele[n] - O.obyvatele[0])}">${pct(O.obyvatele[n] / O.obyvatele[0] - 1)}</span> od ${O.roky[0]}`),
-    dl(kratce(O.obcane[n]), 'občanů ČR', `<span class="${znamenko(O.obcane[n] - O.obcane[0])}">${pct(O.obcane[n] / O.obcane[0] - 1)}</span> od ${O.roky[0]}`),
+    dl(kratce(O.obyvatele[n]), `obyvatel k 1. 1. ${O.roky[n]} (MV)`, `<span class="${znamenko(O.obyvatele[n] - O.obyvatele[a])}">${pct(O.obyvatele[n] / O.obyvatele[a] - 1)}</span> od ${O.roky[a]}`),
+    dl(kratce(O.obcane[n]), 'občanů ČR', `<span class="${znamenko(O.obcane[n] - O.obcane[a])}">${pct(O.obcane[n] / O.obcane[a] - 1)}</span> od ${O.roky[a]}`),
     dl(kratce(O.cizinci[n]), 'cizinců s pobytem', `${kratce(O.docasna_ochrana[n])} s dočasnou ochranou`),
     dl(O.odhad_csu[n] ? kratce(O.odhad_csu[n]) : '–', 'oficiální počet ČSÚ / odhad', ''),
     dl(cis(O.obci), 'obcí', '<a href="../obec/">profily obcí →</a>'),
@@ -72,7 +72,7 @@ Z.nacti('obyvatele/obce.json').then(V => {
   const R = V.roky;
   for (const [k, v] of Object.entries(V.kraje)) $('z-kraj').add(new Option(v, k));
   R.forEach(r => { $('z-od').add(new Option(r, r)); $('z-do').add(new Option(r, r)) });
-  $('z-od').value = R[0]; $('z-do').value = R.at(-1);
+  $('z-od').value = R.includes(Z.OD) ? Z.OD : R[0]; $('z-do').value = R.at(-1);
   const kresli = () => {
     const uk = $('z-uk').value, kr = $('z-kraj').value, vel = +$('z-vel').value, a = R.indexOf(+$('z-od').value), b = R.indexOf(+$('z-do').value);
     if (a >= b) { $('zeb').innerHTML = '<tr><td class="mut">Zvolte rok „od“ menší než „do“.</td></tr>'; return }

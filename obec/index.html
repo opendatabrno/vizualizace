@@ -56,7 +56,8 @@ function vyberObce(chyba) {
 function profil(O, V, C) {
   const R = O.roky, n = R.length - 1, ob = O.obyvatele, kodOk = O.kod_okresu, kodKr = O.kod_kraje;
   document.title = `${O.nazev} – profil obce · Obyvatelé ČR v datech`;
-  const prvni = ob.findIndex(v => v != null);
+  // změny se počítají od roku Z.OD: v roce 2004 ještě nejsou v evidenci MV všichni cizinci
+  const prvni = Math.max(R.indexOf(Z.OD), ob.findIndex(v => v != null));
   const zmena = ob[n] / ob[prvni] - 1, rok0 = R[prvni];
   // agregace okres / kraj / ČR a podobné obce z obce.json (všechny obce)
   const soucet = f => R.map((_, j) => { let s = 0; for (const k in V.obce) { const r = V.obce[k]; if (f(k, r)) s += r[2][j] || 0 } return s });
@@ -99,8 +100,8 @@ function profil(O, V, C) {
 
   <h2>Vývoj počtu obyvatel</h2>
   <p class="uvod">Sloupce jsou data MV z registru: občané ČR s trvalým pobytem a cizinci s trvalým nebo přechodným pobytem, vždy k 1. 1.
-    Fialová čárka je počet ČSÚ. Přesně změřený je jen ke dni sčítání (26. 3. 2021), v ostatních letech ho ČSÚ dopočítává
-    z narozených, zemřelých a stěhování. Čárkovaná čárka je náš odhad pro rok, který ČSÚ ještě nezveřejnil.</p>
+    Fialová čárka je počet ČSÚ. Přesně změřený je jen ke dni sčítání (26. 3. 2011 a 2021), v ostatních letech ho ČSÚ dopočítává
+    z narozených, zemřelých a stěhování. Čárkovaná čárka je náš odhad pro rok, který ČSÚ ještě nezveřejnil. V roce 2004 ještě nebyli v evidenci MV všichni cizinci, změny proto počítáme od roku ${rok0}.</p>
   <div class="legenda"><span><i style="background:var(--obc)"></i>občané ČR</span><span><i style="background:var(--ciz)"></i>cizinci</span>
     <span><i style="background:repeating-linear-gradient(45deg,var(--ciz) 0 3px,var(--do) 3px 6px)"></i>z toho dočasná ochrana</span><span><i style="background:var(--csu);height:4px;width:18px;vertical-align:3px"></i>počet ČSÚ</span>
     <span><i style="background:repeating-linear-gradient(90deg,var(--csu) 0 5px,transparent 5px 8px);height:4px;width:18px;vertical-align:3px"></i>odhad ČSÚ</span></div>
@@ -216,8 +217,9 @@ function profil(O, V, C) {
   // městské části
   if (O.mestske_casti) {
     const mc = O.mestske_casti.filter(m => m.obyvatele[n] != null).sort((a, b) => b.obyvatele[n] - a.obyvatele[n]);
-    $('mc').innerHTML = `<tr><th>Městská část</th><th class="c">Obyvatelé MV ${R[n]}</th><th class="c">Změna od ${rok0}</th><th class="c">Odhad ČSÚ</th><th class="c">Podíl občanů, kteří tu žijí</th></tr>` +
-      mc.map(m => { const p0 = m.obyvatele.find(v => v); const z = m.obyvatele[n] / p0 - 1;
+    const jm = Math.max(prvni, Math.min(...mc.map(m => m.obyvatele.findIndex(v => v != null)).filter(j => j >= 0)));
+    $('mc').innerHTML = `<tr><th>Městská část</th><th class="c">Obyvatelé MV ${R[n]}</th><th class="c">Změna od ${R[jm]}</th><th class="c">Odhad ČSÚ</th><th class="c">Podíl občanů, kteří tu žijí</th></tr>` +
+      mc.map(m => { const p0 = m.obyvatele[jm] || m.obyvatele.find(v => v); const z = m.obyvatele[n] / p0 - 1;
         return `<tr><td><a href="../obyvatele/graf.html?graf=mesto&mesto=${O.kod}&mc=${m.kod}">${esc(m.nazev)}</a></td><td class="c">${cis(m.obyvatele[n])}</td><td class="c ${znamenko(z)}">${pct(z)}</td><td class="c">${cis(m.odhad_csu[n])}</td><td class="c">${m.koef_obcane == null ? '–' : pct(m.koef_obcane, false, 0)}</td></tr>` }).join('');
   }
 }
@@ -237,7 +239,7 @@ function grafVyvoj(O) {
       <rect x="${x}" y="${y(ob)}" width="${bw}" height="${y(0) - y(ob)}" fill="var(--obc)" rx="1"/>
       <rect x="${x}" y="${y(ob + cz - d)}" width="${bw}" height="${y(0) - y(cz - d)}" fill="var(--ciz)"/>
       ${d ? `<rect x="${x}" y="${y(ob + cz)}" width="${bw}" height="${y(0) - y(d)}" fill="url(#sr)"/>` : ''}
-      <text class="osa" x="${x + bw / 2}" y="${H - 10}" text-anchor="middle">${r}</text></g>`;
+      ${(R.length - 1 - j) % (R.length > 14 ? 2 : 1) ? '' : `<text class="osa" x="${x + bw / 2}" y="${H - 10}" text-anchor="middle">${r}</text>`}</g>`;
   });
   const pres = Math.max(6, sl * .1);
   let b = R.map((r, j) => { const v = O.odhad_csu[j]; if (v == null) return ''; const x1 = ml + j * sl + (sl - bw) / 2 - pres, x2 = x1 + bw + 2 * pres, odh = O.csu[j] == null;
@@ -246,11 +248,10 @@ function grafVyvoj(O) {
   // hodnota ČSÚ u posledního roku
   const jp = R.length - 1, vp = O.odhad_csu[jp];
   if (vp != null) b += `<text x="${ml + jp * sl + sl / 2}" y="${y(Math.max(vp, O.obyvatele[jp])) - 12}" text-anchor="middle" font-size="15" font-weight="700" fill="var(--csu)" paint-order="stroke" stroke="var(--bg)" stroke-width="4">${O.csu[jp] == null ? 'odhad ' : 'ČSÚ '}${cis(vp)}</text>`;
-  // sčítání 26. 3. 2021: čtvrt roku za sloupcem 1. 1. 2021
-  const js = R.indexOf(2021);
-  if (js >= 0) { const xs = ml + js * sl + sl / 2 + sl * .23;
+  // sčítání 26. 3.: čtvrt roku za sloupcem 1. 1.
+  for (const rs of [2011, 2021]) { const js = R.indexOf(rs); if (js < 0) continue; const xs = ml + js * sl + sl / 2 + sl * .23;
     b += `<line x1="${xs}" x2="${xs}" y1="${mt}" y2="${H - mb}" stroke="var(--csu)" stroke-dasharray="2 4" stroke-width="1.5"/>
-      <text x="${xs + 5}" y="${mt + 12}" font-size="13" fill="var(--csu)" font-weight="600" paint-order="stroke" stroke="var(--bg)" stroke-width="4">Sčítání 2021</text>` }
+      <text x="${xs + 5}" y="${mt + 12}" font-size="13" fill="var(--csu)" font-weight="600" paint-order="stroke" stroke="var(--bg)" stroke-width="4">Sčítání ${rs}</text>` }
   $('g-vyvoj').innerHTML = s + b + '</svg>';
   $('g-vyvoj').onmousemove = e => { const g = e.target.closest('.sl'); if (!g) return Z.tip(e, ''); const j = +g.dataset.j;
     Z.tip(e, `<b>1. 1. ${R[j]}</b><br>obyvatelé MV: ${cis(O.obyvatele[j])}<br>občané ČR: ${cis(O.obcane[j])}<br>cizinci: ${cis(O.cizinci[j])}${O.docasna_ochrana[j] ? ` (dočasná ochrana ${cis(O.docasna_ochrana[j])})` : ''}<br>${O.csu[j] != null ? `ČSÚ: ${cis(O.csu[j])}` : O.odhad_csu[j] != null ? `odhad ČSÚ: ${cis(O.odhad_csu[j])}` : ''}`) };
@@ -266,7 +267,7 @@ function grafCary(el, R, rady, pasmo, prvni, { abs = false, vyska = 320 } = {}) 
   const x = j => ml + (j - prvni) / (R.length - 1 - prvni) * (W - ml - mr), y = v => mt + (1 - (v - mn) / (mx - mn)) * (H - mt - mb);
   let s = `<svg class="graf" viewBox="0 0 ${W} ${H}">`;
   for (let v = mn; v <= mx + 1e-9; v += krok) s += `<line class="mr" x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}"/><text class="osa" x="${ml - 8}" y="${y(v) + 4}" text-anchor="end">${abs ? Z.kratce(v) : Math.round(v)}</text>`;
-  R.forEach((r, j) => { if (j >= prvni && (j - prvni) % (R.length > 10 ? 2 : 1) === 0 || j === R.length - 1) s += `<text class="osa" x="${x(j)}" y="${H - 8}" text-anchor="middle">${r}</text>` });
+  R.forEach((r, j) => { if (j >= prvni && (R.length - 1 - j) % (R.length - prvni > 10 ? 2 : 1) === 0) s += `<text class="osa" x="${x(j)}" y="${H - 8}" text-anchor="middle">${r}</text>` });
   if (pasmo) { const p = pasmo.map((v, j) => v && j >= prvni ? [x(j), y(v[0]), y(v[1])] : null).filter(Boolean);
     s += `<path d="M${p.map(q => q[0] + ',' + q[2]).join('L')}L${p.reverse().map(q => q[0] + ',' + q[1]).join('L')}Z" fill="var(--soft2)"/>` }
   if (!abs) s += `<line x1="${ml}" x2="${W - mr}" y1="${y(100)}" y2="${y(100)}" stroke="var(--mut)" stroke-dasharray="3 4"/>`;

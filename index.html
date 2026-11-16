@@ -15,7 +15,8 @@
 .velke .h{font-size:clamp(40px,6vw,58px);font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
 .velke .p{color:var(--mut);margin:6px 0 10px}
 .velke svg{height:90px}
-.velke .r{display:flex;justify-content:space-between;font-size:12px;color:var(--mut)}
+.velke .r{position:relative;height:16px;font-size:12px;color:var(--mut)}
+.velke .r span{position:absolute;top:0;transform:translateX(-50%)}.velke .r span:first-child{transform:none}.velke .r span:last-child{transform:translateX(-100%)}
 .ostatni .modul{box-shadow:none}
 </style></head><body>
 <main class="obal">
@@ -54,13 +55,16 @@ Z.hlavicka('');
 Z.hledani(document.getElementById('hledej'), { placeholder: 'Napište název obce…' });
 
 Z.nacti('data/souhrn.json').then(S => {
-  const O = S.obyvatele, n = O.roky.length - 1;
+  const O = S.obyvatele, n = O.roky.length - 1, a = Math.max(0, O.roky.indexOf(Z.OD));
+  // roky na ose malého grafu: první, poslední a každý pátý mezi nimi
+  const rr = O.roky.slice(a), znacky = rr.map((r, j) => r % 5 === 0 && j > 1 && j < rr.length - 2 ? j : -1).filter(j => j >= 0);
+  const osa = [0, ...znacky, rr.length - 1].map(j => `<span style="left:${j / (rr.length - 1) * 100}%">${rr[j]}</span>`).join('');
   // velké číslo v úvodu
   const v = document.getElementById('velke');
   v.innerHTML = `<div class="stitek">Obyvatelé podle MV k 1. 1. ${O.roky[n]}</div><div class="h" id="vh">0</div>
-    <div class="p">${Z.rozdil(O.obyvatele[n] - O.obyvatele[0])} od roku ${O.roky[0]} (${Z.pct(O.obyvatele[n] / O.obyvatele[0] - 1)}) ·
-    z toho ${Z.cis(O.cizinci[n])} cizinců</div>${Z.spark(O.obyvatele, 'var(--obc)', { vyska: 90 })}
-    <div class="r"><span>${O.roky[0]}</span><span>${O.roky[n]}</span></div>`;
+    <div class="p">${Z.rozdil(O.obyvatele[n] - O.obyvatele[a])} od roku ${O.roky[a]} (${Z.pct(O.obyvatele[n] / O.obyvatele[a] - 1)}) ·
+    z toho ${Z.cis(O.cizinci[n])} cizinců</div>${Z.spark(O.obyvatele.slice(a), 'var(--obc)', { vyska: 90, znacky })}
+    <div class="r">${osa}</div>`;
   Z.nabeh(document.getElementById('vh'), O.obyvatele[n]);
 
   // karty témat z MODULY
@@ -79,7 +83,7 @@ Z.nacti('data/souhrn.json').then(S => {
   const mezi = O.obyvatele[n] - O.obyvatele[n - 1];
   document.getElementById('klic').innerHTML = [
     dl(Z.kratce(O.obyvatele[n]), 'obyvatel podle MV (občané + cizinci)', `<span class="${Z.znamenko(mezi)}">${Z.rozdil(mezi)}</span> za rok`),
-    dl(Z.kratce(O.obcane[n]), 'občanů ČR s trvalým pobytem', `<span class="${Z.znamenko(O.obcane[n] - O.obcane[0])}">${Z.pct(O.obcane[n] / O.obcane[0] - 1)}</span> od ${O.roky[0]}`),
+    dl(Z.kratce(O.obcane[n]), 'občanů ČR s trvalým pobytem', `<span class="${Z.znamenko(O.obcane[n] - O.obcane[a])}">${Z.pct(O.obcane[n] / O.obcane[a] - 1)}</span> od ${O.roky[a]}`),
     dl(Z.pct(podil, false), 'podíl cizinců na obyvatelích', `${Z.kratce(O.docasna_ochrana[n])} z nich s dočasnou ochranou`),
     dl(csu ? Z.kratce(csu) : '–', 'oficiální počet ČSÚ, nebo jeho odhad', `MV je o ${Z.pct(O.obyvatele[n] / csu - 1, false)} výš`),
     dl(Z.cis(O.obci), 'obcí, každá má svůj profil', '<a href="obec/">vybrat obec →</a>'),

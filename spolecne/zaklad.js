@@ -69,13 +69,14 @@ function hledani(obal, { vyber, placeholder = 'Najít obec…' } = {}) {
 }
 
 /* malý spojnicový graf (svg jako text) */
-function spark(rada, barva = 'var(--acc)', { vyska = 46, sirka = 300, plocha = true } = {}) {
+function spark(rada, barva = 'var(--acc)', { vyska = 46, sirka = 300, plocha = true, znacky = [] } = {}) {
   const v = rada.filter(x => x != null); if (v.length < 2) return '';
   const mn = Math.min(...v), mx = Math.max(...v), r = mx - mn || 1;
   const b = rada.map((x, j) => x == null ? null : [j / (rada.length - 1) * sirka, vyska - 4 - (x - mn) / r * (vyska - 8)]);
   const d = b.filter(Boolean).map((p, j) => (j ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join('');
   const posl = b.filter(Boolean).at(-1);
   return `<svg class="spark" viewBox="0 0 ${sirka} ${vyska}" preserveAspectRatio="none" aria-hidden="true">
+    ${znacky.map(j => `<line x1="${j / (rada.length - 1) * sirka}" x2="${j / (rada.length - 1) * sirka}" y1="0" y2="${vyska}" stroke="var(--line)" stroke-width="1" vector-effect="non-scaling-stroke"/>`).join('')}
     ${plocha ? `<path d="${d}L${sirka},${vyska}L0,${vyska}Z" fill="${barva}" opacity=".12"/>` : ''}
     <path d="${d}" fill="none" stroke="${barva}" stroke-width="2" vector-effect="non-scaling-stroke"/>
     <circle cx="${posl[0]}" cy="${posl[1]}" r="3" fill="${barva}"/></svg>`;
@@ -101,5 +102,8 @@ function nabeh(el, cil, ms = 900) {
   requestAnimationFrame(krok);
 }
 
-window.Z = { KOREN, Q, cis, pct, rozdil, kratce, esc, bezDiakritiky, znamenko, pekne, nacti, hlavicka, hledani, spark, tip, nabeh };
+// první rok, od kterého se počítají změny: v roce 2004 ještě nejsou v evidenci MV všichni cizinci
+const OD = 2005;
+
+window.Z = { OD, KOREN, Q, cis, pct, rozdil, kratce, esc, bezDiakritiky, znamenko, pekne, nacti, hlavicka, hledani, spark, tip, nabeh };
 })();

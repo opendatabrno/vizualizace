@@ -40,8 +40,8 @@ dl.pojmy dt{font-weight:700;margin-top:12px}dl.pojmy dd{margin:2px 0 0;color:var
           <dt>Občané ČR</dt><dd>Lidé s českým občanstvím a trvalým pobytem v obci. Patří sem i lidé, kteří v obci nežijí (trvalý pobyt na adrese úřadu, žijící v zahraničí).</dd>
           <dt>Cizinci s povoleným pobytem</dt><dd>Cizinci s trvalým pobytem nebo s přechodným pobytem nad 90 dní (u občanů EU přechodný pobyt, u ostatních dlouhodobé vízum a pobyt). Od roku 2022 včetně dočasné ochrany.</dd>
           <dt>Dočasná ochrana</dt><dd>Pobytové oprávnění pro lidi prchající před válkou na Ukrajině (od března 2022). V sadě obyvatel je od roku 2023 jako samostatný sloupec, je součástí přechodného pobytu.</dd>
-          <dt>Počet obyvatel ČSÚ</dt><dd>Oficiální počet obyvatel. Přesně změřený je jen ke dni sčítání (naposledy 26. 3. 2021, další 2031), v ostatních letech ho ČSÚ dopočítává ze sčítání a bilance narozených, zemřelých a stěhování. Stěhování přebírá ze změn trvalého pobytu, takže s odstupem od sčítání se může od skutečnosti vzdalovat. Zveřejňuje se v květnu za předchozí 1. 1.</dd>
-          <dt>Odhad ČSÚ (<code>odhad_csu</code>)</dt><dd>Než ČSÚ data zveřejní, odhadujeme jeho počet z dat MV koeficientem obce z posledního známého roku. Mimo roky se zlomem se od pozdějšího čísla ČSÚ liší v mediánu o 0,04–0,07 %.</dd>
+          <dt>Počet obyvatel ČSÚ</dt><dd>Oficiální počet obyvatel. Přesně změřený je jen ke dni sčítání (naposledy 26. 3. 2021, další 2031), v ostatních letech ho ČSÚ dopočítává ze sčítání a bilance narozených, zemřelých a stěhování. Stěhování přebírá ze změn trvalého pobytu, takže s odstupem od sčítání se může od skutečnosti vzdalovat: za léta 2001–2011 nadhodnotil ČR o 0,4 %, za léta 2011–2021 o 2,0 % (Prahu o 6 %). Data MV byla při Sčítání 2011 nad skutečností o 2,1 %, při Sčítání 2021 o 3,8 %. Zveřejňuje se v květnu za předchozí 1. 1. <a href="https://github.com/opendatabrno/obyvatele/blob/main/analyza/SCITANI.md">Rozbor MV, ČSÚ a sčítání →</a></dd>
+          <dt>Odhad ČSÚ (<code>odhad_csu</code>)</dt><dd>Než ČSÚ data zveřejní, odhadujeme jeho počet z dat MV koeficientem obce z posledního známého roku. Mimo roky se zlomem se od roku 2015 liší od pozdějšího čísla ČSÚ v mediánu o 0,04–0,07 %.</dd>
           <dt>Podíl občanů, kteří v obci žijí (<code>koef_obcane</code>)</dt><dd>U městských částí podle Sčítání 2021: kolik občanů z registru v části opravdu bydlí. Pod 1 = víc registrovaných než bydlících (např. Brno-střed 0,74).</dd>
         </dl></section>
 
@@ -56,8 +56,12 @@ dl.pojmy dt{font-weight:700;margin-top:12px}dl.pojmy dd{margin:2px 0 0;color:var
       <section id="zlomy"><h2>Zlomy v datech</h2>
         <div class="posuv"><table class="tab">
           <tr><th>Kdy</th><th>Co se stalo</th><th>Dopad</th></tr>
+          <tr><td>2004–2005</td><td>Cizinci se do evidence MV teprve doplňovali</td><td>k 1. 1. 2004 jen 53 tis. cizinců, o rok později 263 tis.; změny na webu proto počítáme od roku 2005</td></tr>
+          <tr><td>2004–2006</td><td>Soubory MV bez kódů obcí</td><td>obce jsme přiřadili podle názvu a okresu; městské části jsou v datech od roku 2007 (Praha), resp. 2008 (ostatní města)</td></tr>
           <tr><td>2009–2011</td><td>Hospodářská krize</td><td>cizinců ubývalo až do konce roku 2011</td></tr>
           <tr><td>12/2011</td><td>Pravděpodobně změna evidence (MV)</td><td>+30 tis. přechodných pobytů občanů mimo EU za jeden měsíc</td></tr>
+          <tr><td>2011</td><td>ČSÚ přepočítal počty podle Sčítání 2011</td><td>počet ČSÚ k 1. 1. 2011 o 46 tis. nižší než dopočet k 31. 12. 2010</td></tr>
+          <tr><td>2013</td><td>MV začalo cizince zveřejňovat z jiného zdroje, s rozdělením na trvalý a přechodný pobyt</td><td>cizinců o 45 tis. méně než o rok dřív</td></tr>
           <tr><td>2021</td><td>ČSÚ přepočítal počty podle Sčítání 2021</td><td>počet ČSÚ k 1. 1. 2021 o ~200 tis. nižší než o rok dřív; odhad ČSÚ v tomto roce méně přesný</td></tr>
           <tr><td>1/2021</td><td>Brexit</td><td>občané Spojeného království patří mezi občany třetích zemí</td></tr>
           <tr><td>3/2022</td><td>Dočasná ochrana (válka na Ukrajině)</td><td>cizinci s povoleným pobytem +250 tis. za jediný měsíc</td></tr>

@@ -68,7 +68,7 @@ k vložení jako iframe. Starší adresy `obyvatele/?graf=…` a `cizinci/?graf=
 | `od=2015` | vývoj | začátek osy |
 | `osa=log` | vývoj | logaritmická osa (jen podle států) |
 | `ukazatel=obcane`, `ukazatel=cizinci` | obce, města | změna občanů ČR / podíl cizinců místo změny obyvatel |
-| `od=2014`, `do=2026` | obce, města | roky, mezi kterými se počítá změna |
+| `od=2005`, `do=2026` | obce, města | roky, mezi kterými se počítá změna (výchozí od 2005, data od 2004) |
 | `kraj=CZ064` | obce | přiblíží kraj (kód NUTS) |
 | `obec=582786` | obce, obec | vybraná obec (kód ČSÚ) |
 | `mesto=582786`, `mc=550973` | města | město (kód obce) a vybraná městská část |

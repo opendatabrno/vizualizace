@@ -13,20 +13,20 @@ window.MODULY = [
   {
     id: 'obyvatele',
     nazev: 'Obyvatelé',
-    popis: 'Počty obyvatel všech obcí a městských částí od roku 2014: kde lidí přibývá a ubývá, občané a cizinci, oficiální počet ČSÚ.',
+    popis: 'Počty obyvatel všech obcí a městských částí od roku 2004: kde lidí přibývá a ubývá, občané a cizinci, oficiální počet ČSÚ.',
     barva: 'var(--obc)',
     adresa: 'obyvatele/',
     stav: 'hotovo',
     data: [{
       nazev: 'Informativní počty obyvatel v obcích', repo: 'opendatabrno/obyvatele', zdroj: 'MV ČR, ČSÚ',
       web: 'https://opendatabrno.github.io/obyvatele/',
-      soubory: [['obyvatele_obce', 'obce × rok, stav k 1. 1., 2014–dosud'],
-                ['obyvatele_mestske_casti', 'městské části 8 statutárních měst × rok']],
+      soubory: [['obyvatele_obce', 'obce × rok, stav k 1. 1., 2004–dosud'],
+                ['obyvatele_mestske_casti', 'městské části 8 statutárních měst × rok, 2007–dosud']],
       aktualizace: 'v lednu (MV), oficiální počty ČSÚ v květnu'
     }],
     souhrn: S => ({
       cislo: S.obyvatele.obyvatele.at(-1), popisek: `obyvatel podle MV k 1. 1. ${S.obyvatele.roky.at(-1)}`,
-      rada: S.obyvatele.obyvatele
+      rada: S.obyvatele.obyvatele.slice(Math.max(0, S.obyvatele.roky.indexOf(Z.OD)))
     })
   },
   {
