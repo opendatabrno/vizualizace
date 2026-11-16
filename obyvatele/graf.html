@@ -214,7 +214,7 @@ function mapa(D,H){
    ${cis(o[b])} obyvatel k 1. 1. ${roky[b]}${uk!=='cizinci'?` (${roky[a]}: ${cis(o[a])})`:''}, z toho ${cis(c[b])} cizinců</p>
    <h3>Obyvatelé ${roky[0]}–${roky[N-1]}</h3>${graf(roky,o,c)}
    <details><summary class="zpet">Tabulka po letech</summary>${tabulka(roky,o,c)}</details>
-   <p class="pozn" style="margin-top:10px"><a href="../obec/?kod=${vyb}" target="_top" style="color:var(--acc)">Profil obce</a> · <a href="?graf=obec&obec=${vyb}" style="color:var(--acc)">graf jen pro tuto obec</a> (k vložení na web obce)</p>`}
+   <p class="pozn" style="margin-top:10px"><a href="../obec/?kod=${vyb}#obyvatele" target="_top" style="color:var(--acc)">Profil obce</a> · <a href="?graf=obec&obec=${vyb}" style="color:var(--acc)">graf jen pro tuto obec</a> (k vložení na web obce)</p>`}
  function kresli(){
   pUk(uk);sa.value=roky[a];sb.value=roky[b];sa.disabled=uk==='cizinci';sa.style.opacity=uk==='cizinci'?.4:1;
   $('sub').textContent=textUkazatele(uk,roky[a],roky[b])+(kraj?' · '+(D.kraje[kraj]||''):' · všechny obce ČR');

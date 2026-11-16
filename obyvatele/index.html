@@ -81,12 +81,12 @@ Z.nacti('obyvatele/obce.json').then(V => {
       .map(([k, r]) => [k, r, f(r)]).filter(x => isFinite(x[2])).sort((x, y) => y[2] - x[2]).slice(0, 20);
     $('zeb').innerHTML = `<thead><tr><th class="por">#</th><th>Obec</th><th>Okres</th><th class="c">${R[a]}</th><th class="c">${R[b]}</th><th class="c">Změna</th><th class="c">Cizinci ${R[b]}</th><th class="sp">Vývoj</th></tr></thead><tbody>` +
       sez.map(([k, r], i) => { const z = r[2][b] / r[2][a] - 1;
-        return `<tr data-k="${k}"><td class="por">${i + 1}.</td><td><a href="../obec/?kod=${k}">${esc(r[0])}</a></td><td class="mut">${esc(V.okresy[r[1]] || '')}</td>
+        return `<tr data-k="${k}"><td class="por">${i + 1}.</td><td><a href="${Z.odkazObce(k)}">${esc(r[0])}</a></td><td class="mut">${esc(V.okresy[r[1]] || '')}</td>
         <td class="c">${cis(r[2][a])}</td><td class="c">${cis(r[2][b])}</td><td class="c ${znamenko(z)}">${pct(z)}<br><small class="mut">${rozdil(r[2][b] - r[2][a])}</small></td>
         <td class="c">${pct(r[3][b] / r[2][b], false)}</td><td class="sp">${Z.spark(r[2].slice(a, b + 1), z >= 0 ? 'var(--plus)' : 'var(--minus)', { vyska: 26, sirka: 120 })}</td></tr>` }).join('') + '</tbody>';
   };
   ['z-uk', 'z-kraj', 'z-vel', 'z-od', 'z-do'].forEach(id => $(id).onchange = kresli);
-  $('zeb').onclick = e => { const tr = e.target.closest('tr[data-k]'); if (tr && !e.target.closest('a')) location.href = '../obec/?kod=' + tr.dataset.k };
+  $('zeb').onclick = e => { const tr = e.target.closest('tr[data-k]'); if (tr && !e.target.closest('a')) location.href = Z.odkazObce(tr.dataset.k) };
   kresli();
 });
 </script>

@@ -16,6 +16,7 @@ h1,h2,h3{line-height:1.15;margin:0}
 h1{font-size:clamp(30px,5.6vw,52px);text-transform:uppercase;letter-spacing:.01em}
 h2{font-size:clamp(20px,3vw,26px);text-transform:uppercase;margin:44px 0 6px}
 h2+.uvod{margin-top:0}
+h2[id]{scroll-margin-top:72px}
 .uvod{color:var(--mut);max-width:760px;margin:6px 0 18px}
 .stitek{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600}
 .mut{color:var(--mut)}.cisla{font-variant-numeric:tabular-nums}

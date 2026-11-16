@@ -22,6 +22,9 @@
 .poradi div{background:var(--soft);border-radius:6px;padding:10px 12px}.poradi b{font-size:22px;display:block}
 .pruh{display:flex;height:22px;border-radius:3px;overflow:hidden;margin:6px 0}
 .pruh span{display:block;height:100%}
+.temata{display:flex;flex-wrap:wrap;gap:8px;margin:-6px 0 20px}
+.temata a{text-decoration:none;color:var(--fg);font-size:14px;padding:5px 11px;border:1px solid var(--line);border-left:4px solid var(--barva);border-radius:4px}
+.temata a:hover{background:var(--soft)}
 .vyber-obce{max-width:620px;margin:30px 0}
 .velke-obce{columns:3 220px;padding:0;list-style:none;margin:10px 0}.velke-obce li{padding:3px 0}
 #nacitani{padding:60px 0;color:var(--mut)}
@@ -90,6 +93,7 @@ function profil(O, V, C) {
     <div class="tlacitka netisk"><button class="tl" id="sdilet">Sdílet odkaz</button><button class="tl" onclick="print()">Tisk / PDF</button>
     <a class="tl" href="#vlozit">Vložit na web</a></div></div></section>
   <p class="lead">${text}</p>
+  <nav class="temata netisk" aria-label="Sekce profilu">${MODULY.filter(m => m.stav === 'hotovo').map(m => `<a href="#${m.id}" style="--barva:${m.barva}">${esc(m.nazev)}</a>`).join('')}</nav>
   <div class="dlazdice">
     ${dl(cis(ob[n]), `obyvatel k 1. 1. ${R[n]} (MV)`, `<span class="${znamenko(meziRok)}">${rozdil(meziRok)}</span> za poslední rok`)}
     ${dl(`<span class="${znamenko(zmena)}">${pct(zmena)}</span>`, `změna od roku ${rok0}`, `okres ${pct(okresZm)} · ČR ${pct(crZm)}`)}
@@ -98,7 +102,7 @@ function profil(O, V, C) {
     ${dl(`${poradi(vOkrese, velikost)}.`, `největší z ${vOkrese.length} obcí okresu`, `${poradi(vKraji, velikost)}. v kraji · ${cis(poradi(vsechny, velikost))}. v ČR`)}
   </div>
 
-  <h2>Vývoj počtu obyvatel</h2>
+  <h2 id="obyvatele">Vývoj počtu obyvatel</h2>
   <p class="uvod">Sloupce jsou data MV z registru: občané ČR s trvalým pobytem a cizinci s trvalým nebo přechodným pobytem, vždy k 1. 1.
     Fialová čárka je počet ČSÚ. Přesně změřený je jen ke dni sčítání (26. 3. 2011 a 2021), v ostatních letech ho ČSÚ dopočítává
     z narozených, zemřelých a stěhování. Čárkovaná čárka je náš odhad pro rok, který ČSÚ ještě nezveřejnil. V roce 2004 ještě nebyli v evidenci MV všichni cizinci, změny proto počítáme od roku ${rok0}.</p>
@@ -127,7 +131,7 @@ function profil(O, V, C) {
   <p class="uvod">Stav k 1. 1. ${R[n]}. Věk ani státní příslušnost cizinců data MV za obce neuvádějí.</p>
   <div class="dve" id="slozeni"></div>
 
-  ${C && C.okresy[kodOk] ? `<h2>Cizinci v okrese ${esc(O.okres)}</h2>
+  ${C && C.okresy[kodOk] ? `<h2 id="cizinci">Cizinci v okrese ${esc(O.okres)}</h2>
   <p class="uvod">Odkud cizinci pocházejí, uvádí MV jen za okresy (cizinci s povoleným pobytem k 31. 12.). <a href="../cizinci/">Více v tématu Cizinci →</a></p>
   <div class="dve" id="ciz-okres"></div>` : ''}
 
@@ -209,6 +213,11 @@ function profil(O, V, C) {
 
   // školy zřizované obcí
   if (O.zaci) grafZaci(O);
+
+  // příchod z tématu (#obyvatele, #cizinci, #zaci): obsah vzniká až teď, proto se na sekci posune ručně
+  document.querySelectorAll('.temata a').forEach(a => document.getElementById(a.hash.slice(1)) || a.remove());
+  const cil = location.hash && document.getElementById(location.hash.slice(1));
+  if (cil) { cil.scrollIntoView(); setTimeout(() => cil.scrollIntoView(), 300) }   // podruhé po načtení písma a grafů
 
   // MV × ČSÚ
   const koef = csu ? (csu - ciz) / O.obcane[n] : null;

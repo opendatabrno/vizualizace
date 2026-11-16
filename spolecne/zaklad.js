@@ -19,7 +19,10 @@ const pekne = m => { const p = Math.pow(10, Math.floor(Math.log10(m))), r = m / 
 const cache = {};
 const nacti = u => cache[u] ??= fetch(KOREN + u, { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error(u); return r.json() });
 
+// stránka, ze které se jde na profil obce: téma (modul) → profil otevře jeho sekci
+let tema = '';
 function hlavicka(aktivni) {
+  tema = MODULY.some(m => m.id === aktivni) ? aktivni : aktivni === 'obec' ? null : '';
   const odkazy = [...MODULY.filter(m => m.stav === 'hotovo'), ...STRANKY];
   const h = document.createElement('header');
   h.className = 'hlav';
@@ -35,6 +38,12 @@ function hlavicka(aktivni) {
   document.body.append(f);
 }
 
+/* adresa profilu obce; z tématu vede rovnou na jeho sekci, z profilu zachová otevřenou sekci */
+function odkazObce(kod) {
+  const kotva = tema ? '#' + tema : tema === null ? location.hash : '';
+  return `${KOREN}obec/?kod=${kod}${kotva}`;
+}
+
 /* našeptávač obcí; po výběru přejde na profil obce (nebo zavolá vlastní funkci) */
 function hledani(obal, { vyber, placeholder = 'Najít obec…' } = {}) {
   obal.classList.add('hledej');
@@ -42,7 +51,7 @@ function hledani(obal, { vyber, placeholder = 'Najít obec…' } = {}) {
     <input type="search" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-label="${esc(placeholder)}" placeholder="${esc(placeholder)}" autocomplete="off"><ul role="listbox"></ul>`;
   const inp = obal.querySelector('input'), ul = obal.querySelector('ul');
   let obce = null, nalez = [], i = -1;
-  const jdi = kod => vyber ? vyber(kod) : (location.href = `${KOREN}obec/?kod=${kod}`);
+  const jdi = kod => vyber ? vyber(kod) : (location.href = odkazObce(kod));
   inp.addEventListener('focus', () => obce || nacti('data/obce.json').then(d => {
     obce = d.obce.map(r => [...r, bezDiakritiky(r[1])]); kresli() }), { once: true });
   const kresli = () => {
@@ -105,5 +114,5 @@ function nabeh(el, cil, ms = 900) {
 // první rok, od kterého se počítají změny: v roce 2004 ještě nejsou v evidenci MV všichni cizinci
 const OD = 2005;
 
-window.Z = { OD, KOREN, Q, cis, pct, rozdil, kratce, esc, bezDiakritiky, znamenko, pekne, nacti, hlavicka, hledani, spark, tip, nabeh };
+window.Z = { OD, KOREN, Q, cis, pct, rozdil, kratce, esc, bezDiakritiky, znamenko, pekne, nacti, hlavicka, hledani, odkazObce, spark, tip, nabeh };
 })();

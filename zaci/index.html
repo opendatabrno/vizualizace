@@ -114,13 +114,13 @@ Promise.all([Z.nacti('zaci/obce.json'), Z.nacti('obyvatele/obce.json')]).then(([
       .map(([k, r]) => [k, r, f(r, k)]).filter(x => isFinite(x[2])).sort((x, y) => y[2] - x[2]).slice(0, 25);
     $('zeb').innerHTML = `<thead><tr><th class="por">#</th><th>Obec</th><th>Okres</th><th class="c">MŠ ${R[n]}</th><th class="c">ZŠ ${R[n]}</th><th class="c">Celkem</th><th class="c">Změna od ${R[0]}</th><th class="c">Na 1 000 obyv.</th><th class="c">Odhad prostředků</th><th class="sp">Vývoj</th></tr></thead><tbody>` +
       sez.map(([k, r], i) => { const z = r[4][0] ? r[4][n] / r[4][0] - 1 : null, o = obyv(k);
-        return `<tr data-k="${k}"><td class="por">${i + 1}.</td><td><a href="../obec/?kod=${k}#zaci">${esc(r[0])}</a></td><td class="mut">${esc(V.okresy[r[1]] || '')}</td>
+        return `<tr data-k="${k}"><td class="por">${i + 1}.</td><td><a href="${Z.odkazObce(k)}">${esc(r[0])}</a></td><td class="mut">${esc(V.okresy[r[1]] || '')}</td>
         <td class="c">${cis(r[2][n])}</td><td class="c">${cis(r[3][n])}</td><td class="c"><b>${cis(r[4][n])}</b></td>
         <td class="c ${z == null ? '' : znamenko(z)}">${z == null ? '–' : pct(z)}</td><td class="c">${o ? cis(Math.round(r[4][n] / o * 1000)) : '–'}</td>
         <td class="c">${r[5][n] ? kc(r[5][n]) : '–'}</td><td class="sp">${Z.spark(r[4], 'var(--zak)', { vyska: 26, sirka: 120 })}</td></tr>` }).join('') + '</tbody>';
   };
   ['z-uk', 'z-kraj', 'z-vel'].forEach(id => $(id).onchange = kresli);
-  $('zeb').onclick = e => { const tr = e.target.closest('tr[data-k]'); if (tr && !e.target.closest('a')) location.href = '../obec/?kod=' + tr.dataset.k + '#zaci' };
+  $('zeb').onclick = e => { const tr = e.target.closest('tr[data-k]'); if (tr && !e.target.closest('a')) location.href = Z.odkazObce(tr.dataset.k) };
   kresli();
 }).catch(e => { $('klic').innerHTML = '<p class="mut">Data se nepodařilo načíst.</p>'; console.error(e) });
 </script>
